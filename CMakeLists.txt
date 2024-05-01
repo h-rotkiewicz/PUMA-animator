@@ -1,9 +1,12 @@
 # see https://alexreinking.com/blog/how-to-use-cmake-without-the-agonizing-pain-part-1.html
 cmake_minimum_required(VERSION 3.29)
 set(CMAKE_CXX_STANDARD 20)
+option(WIN32 "Windows build" OFF)
 project(PUMA)
-set(CMAKE_C_COMPILER "/usr/bin/clang")
-set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    error("GCC is not supported, please use clang")
+endif()
 
 include(FetchContent)
 FetchContent_Declare(
@@ -42,13 +45,25 @@ PRIVATE
 )
 target_compile_definitions(${PROJECT_NAME} PRIVATE UNICODE)
 
-target_link_libraries(${PROJECT_NAME}
-PRIVATE
-    Diligent-BuildSettings
-    # Diligent-GraphicsEngineD3D11-shared
-    # Diligent-GraphicsEngineD3D12-shared
-    Diligent-GraphicsEngineOpenGL-shared
-    Diligent-GraphicsEngineVk-shared
-    DiligentFX
-)
+if(WIN32)
+    target_link_libraries(${PROJECT_NAME}
+        PRIVATE
+        Diligent-BuildSettings
+        Diligent-GraphicsEngineD3D11-shared
+        Diligent-GraphicsEngineD3D12-shared
+        Diligent-GraphicsEngineOpenGL-shared
+        Diligent-GraphicsEngineVk-shared
+        DiligentFX
+        )
+else()
+    target_link_libraries(${PROJECT_NAME}
+        PRIVATE
+        Diligent-BuildSettings
+        # Diligent-GraphicsEngineD3D11-shared
+        # Diligent-GraphicsEngineD3D12-shared
+        Diligent-GraphicsEngineOpenGL-shared
+        Diligent-GraphicsEngineVk-shared
+        DiligentFX
+        )
+endif()
 # copy_required_dlls(${PROJECT_NAME})
