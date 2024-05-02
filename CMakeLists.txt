@@ -1,69 +1,48 @@
 # see https://alexreinking.com/blog/how-to-use-cmake-without-the-agonizing-pain-part-1.html
+include(ExternalProject)
 cmake_minimum_required(VERSION 3.29)
 set(CMAKE_CXX_STANDARD 20)
 option(WIN32 "Windows build" OFF)
 project(PUMA)
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    error("GCC is not supported, please use clang")
+find_package( OpenGL REQUIRED )
+
+set( GLFW_BUILD_DOCS OFF CACHE BOOL  "GLFW lib only" )
+set( GLFW_INSTALL OFF CACHE BOOL  "GLFW lib only" )
+set( GLAD_GL "" )
+
+# # option( USE-GLFW-GLAD "Use GLAD from GLFW" ON )
+#
+# if(USE-GLFW-GLAD)
+#   include_directories("${GLFW_SOURCE_DIR}/deps")
+#   set( GLAD_GL "${GLFW_SOURCE_DIR}/deps/glad/gl.h" )
+# endif()
+#
+
+
+if( MSVC )
+    SET( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ENTRY:mainCRTStartup" )
 endif()
 
-include(FetchContent)
-FetchContent_Declare(
-    DiligentCore
-    GIT_REPOSITORY https://github.com/DiligentGraphics/DiligentCore.git
-    SOURCE_DIR _deps/DiligentCore
-)
-FetchContent_Declare(
-    DiligentTools
-    GIT_REPOSITORY https://github.com/DiligentGraphics/DiligentTools.git
-    SOURCE_DIR _deps/DiligentTools
-)
-FetchContent_Declare(
-    DiligentFX
-    GIT_REPOSITORY https://github.com/DiligentGraphics/DiligentFX.git
-    SOURCE_DIR _deps/DiligentFX
-)
-FetchContent_MakeAvailable(DiligentCore DiligentTools DiligentFX)
-
-
+add_subdirectory(${CMAKE_SOURCE_DIR}/includes/glfw)
 
 if(CMAKE_BUILD_TYPE STREQUAL "DEBUG")
   find_package(Catch2 3 REQUIRED)
   add_subdirectory(Tests)
 endif()
 
-file(GLOB SOURCES "src/*.cpp")
 
+
+file(GLOB SOURCES "src/*.cpp" "src/*.c")
+
+include_directories(${CMAKE_SOURCE_DIR}/includes)
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-target_include_directories(${PROJECT_NAME}
-PRIVATE
-    ${diligentcore_SOURCE_DIR}
-    ${diligenttools_SOURCE_DIR}
-    ${diligentfx_SOURCE_DIR}
-)
-target_compile_definitions(${PROJECT_NAME} PRIVATE UNICODE)
-
-if(WIN32)
-    target_link_libraries(${PROJECT_NAME}
-        PRIVATE
-        Diligent-BuildSettings
-        Diligent-GraphicsEngineD3D11-shared
-        Diligent-GraphicsEngineD3D12-shared
-        Diligent-GraphicsEngineOpenGL-shared
-        Diligent-GraphicsEngineVk-shared
-        DiligentFX
-        )
-else()
-    target_link_libraries(${PROJECT_NAME}
-        PRIVATE
-        Diligent-BuildSettings
-        # Diligent-GraphicsEngineD3D11-shared
-        # Diligent-GraphicsEngineD3D12-shared
-        Diligent-GraphicsEngineOpenGL-shared
-        Diligent-GraphicsEngineVk-shared
-        DiligentFX
-        )
+target_link_libraries(${PROJECT_NAME} glfw)
+if( MSVC )
+    if(${CMAKE_VERSION} VERSION_LESS "3.6.0")
+        message( "\n\t[ WARNING ]\n\n\tCMake version lower than 3.6.\n\n\t - Please update CMake and rerun; OR\n\t - Manually set 'GLFW-CMake-starter' as StartUp Project in Visual Studio.\n" )
+    else()
+        set_property( DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT GLFW-CMake-starter )
+    endif()
 endif()
-# copy_required_dlls(${PROJECT_NAME})
