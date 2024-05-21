@@ -1,22 +1,20 @@
 
 #define STDOUT
 #define DEBUG
+#include "main.h"
 #include "Rendering.h"
 #include "logger.h"
-#include "main.h"
 #include <cmath>
 
-
-
-
 int main() {
-
+  int Radius = 3;
   GLFWwindow *window = init();
   objl::Loader Loader;
   ModelParams modelParams;
+  Camera camera(Radius, 0,modelParams.modelPosition);
   LOG::logger logger("Log.txt");
   Shader Shader(Paths::shaders_vs.c_str(), Paths::shaders_fs.c_str());
-  if(!Loader.LoadFile(Paths::resources_puma_obj)) {
+  if (!Loader.LoadFile(Paths::resources_puma_obj)) {
     std::cerr << "Failed to load OBJ file." << std::endl;
     return -1;
   }
@@ -43,8 +41,9 @@ int main() {
   Shader.setInt("texture", 0);
 
   while (!glfwWindowShouldClose(window)) {
+    processInput(window,  camera);
     preRender(window, texture1, modelParams);
-    updateShader(Shader, modelParams);
+    updateShader(Shader, modelParams, camera);
     render(VAO, indices, window);
     modelParams.angle = 2 * cos(glfwGetTime());
   }
@@ -56,4 +55,3 @@ int main() {
   glfwTerminate();
   return 0;
 }
-

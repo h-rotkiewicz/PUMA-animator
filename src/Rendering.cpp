@@ -6,14 +6,24 @@
 using buffer = unsigned int;
 
 
-void processInput(GLFWwindow *window, float &angle, glm::vec3 &RotationAxis) {
+void processInput(GLFWwindow *window, Camera &camera) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     glfwSetWindowShouldClose(window, true);
+  if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    camera.Orbit(1.f, glm::vec3(1.0f, 0.0f, 0.0f));
+  if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    camera.Orbit(-1.f, glm::vec3(1.0f, 0.0f, 0.0f));
+  if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    camera.Orbit(1.f, glm::vec3(0.0f, 1.0f, 0.0f));
+  if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    camera.Orbit(-1.f, glm::vec3(0.0f, 1.0f, 0.0f));
+  if(glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+    camera.change_vert_offset(0.01);
+  if(glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+    camera.change_vert_offset(-0.01);
 }
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
-  // make sure the viewport matches the new window dimensions; note that width
-  // and height will be significantly larger than specified on retina displays.
   glViewport(0, 0, width, height);
 }
 
@@ -101,7 +111,6 @@ buffer bindTexture() {
 
 
 void preRender( GLFWwindow *window, const buffer & texture1, ModelParams &modelParams) {
-  processInput(window, modelParams.angle, modelParams.RotationAxis);
 
   glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -110,15 +119,15 @@ void preRender( GLFWwindow *window, const buffer & texture1, ModelParams &modelP
   glBindTexture(GL_TEXTURE_2D, texture1);
 }
 
-void updateShader(Shader &Shader, const ModelParams &modelParams) {
+void updateShader(Shader &Shader, const ModelParams &modelParams, const Camera &Camera) {
     glm::mat4 view = glm::mat4(1.0f);
     glm::mat4 projection = glm::mat4(1.0f);
     projection =
         glm::perspective(glm::radians(45.0f),
                          (float)Settings::SCR_WIDTH / (float)Settings::SCR_HEIGHT, 0.1f, 100.0f);
     // view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-    view = glm::lookAt(modelParams.cameraPosition, modelParams.cameraTarget,
-                       modelParams.cameraUp);
+    view = glm::lookAt(Camera.cameraPosition, Camera.getCameraTarget() ,
+                       Camera.getCameraUp());
 
     Shader.setMat4("projection", projection);
     Shader.setMat4("view", view);
