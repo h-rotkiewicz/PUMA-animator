@@ -8,23 +8,21 @@
 #include "defines.h"
 #include <cmath>
 
-
-
 int main() {
   int Radius = 3;
   GLFWwindow *window = init();
   ModelParams modelParams;
   Camera camera(Radius, 0, modelParams.modelPosition);
-  Shader Shader(Paths::shaders_vs.c_str(), Paths::shaders_fs.c_str());
+  Shader shader(Paths::shaders_vs.c_str(), Paths::shaders_fs.c_str());
 
   std::unordered_map<RobotParts, PartType> Parts;
   make_robot(Parts);
 
-  Shader.use();
+  shader.use();
   while (!glfwWindowShouldClose(window)) {
-    processInput(window, camera);
+    processInput(window, camera, Parts);
     preRender();
-    updateShader(Shader, modelParams, camera);
+    updateShader(shader, modelParams, camera);
     render(Parts, window);
     // modelParams.angle = 2 * cos(glfwGetTime());
     CheckForErrors("Something went wrong ");

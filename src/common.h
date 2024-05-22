@@ -39,6 +39,7 @@ inline auto no_rotation = [](float angle) {
 
 inline auto Render = [](auto const &part) { part.Render(); };
 
+
 enum class RobotParts { base, upper_base, middle_arm };
 
 template <typename Destructor> class bufferWrapper {

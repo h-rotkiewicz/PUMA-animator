@@ -4,26 +4,6 @@
 
 using buffer = unsigned int;
 
-void processInput(GLFWwindow *window, Camera &camera) {
-  if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-    glfwSetWindowShouldClose(window, true);
-  if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-    camera.Orbit(1.f, glm::vec3(1.0f, 0.0f, 0.0f));
-  if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-    camera.Orbit(-1.f, glm::vec3(1.0f, 0.0f, 0.0f));
-  if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-    camera.Orbit(1.f, glm::vec3(0.0f, 1.0f, 0.0f));
-  if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-    camera.Orbit(-1.f, glm::vec3(0.0f, 1.0f, 0.0f));
-  if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-    camera.change_vert_offset(0.01);
-  if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-    camera.change_vert_offset(-0.01);
-  if(glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
-    camera.change_radius(0.01);
-  if(glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)
-    camera.change_radius(-0.01);
-}
 
 
 void framebuffer_size_callback( GLFWwindow * window, int width, int height) {
@@ -52,22 +32,15 @@ GLFWwindow *init() {
   return window;
 }
 
-/* bindXXXX functions are ugly and I do realise that, but since they are
- * temporary I will make them sexier later on. They will have to be made more
- * robust anyway since rendering the whole robot as a big blob is not a good
- * idea, The whole robot is not a single object, but a collection of objects, so
- * different texutres and shaders will have to be used for different parts of
- * the robot but for now, for testing purposes, this is fine. I will change this
- * after the shaders are working and the robot is rendered correctly.
- * */
-
 
 std::tuple<GLuint, GLuint, GLuint> load_vxo(std::string_view path,
                                             std::vector<objl::Vertex> &vertices,
                                             std::vector<unsigned int> &indices){
   objl::Loader Loader;
   if (!Loader.LoadFile(path.data())) {
+    std::cerr << "Failed to load OBJ file."<< path.data() << std::endl;
     throw std::runtime_error("Failed to load OBJ file.");
+
   }
   vertices = Loader.LoadedVertices;
   indices = Loader.LoadedIndices;

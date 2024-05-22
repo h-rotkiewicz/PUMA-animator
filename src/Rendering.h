@@ -5,6 +5,7 @@
 #include "shader.h"
 #include <unordered_map>
 
+
 struct Settings {
   // settings
   constexpr static unsigned int SCR_WIDTH = 800;
@@ -12,7 +13,35 @@ struct Settings {
 };
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
-void processInput(GLFWwindow *window, Camera &camera);
+void processInput(GLFWwindow *window, Camera &camera, auto const & Parts);
+
+void processInput(GLFWwindow *window, Camera &camera, auto  &Parts) {
+  if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+    glfwSetWindowShouldClose(window, true);
+  if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    camera.Orbit(1.f, glm::vec3(1.0f, 0.0f, 0.0f));
+  if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    camera.Orbit(-1.f, glm::vec3(1.0f, 0.0f, 0.0f));
+  if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    camera.Orbit(1.f, glm::vec3(0.0f, 1.0f, 0.0f));
+  if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    camera.Orbit(-1.f, glm::vec3(0.0f, 1.0f, 0.0f));
+  if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+    camera.change_vert_offset(0.01);
+  if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+    camera.change_vert_offset(-0.01);
+  if(glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
+    camera.change_radius(0.01);
+  if(glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)
+    camera.change_radius(-0.01);
+
+  //Example how to rotate
+  auto angle = 30.f;
+  auto Rotate = [&](auto &part) { part.rotate(angle);};
+  auto & part = Parts.at(RobotParts::middle_arm);
+
+  std::visit(Rotate, part);
+}
 GLFWwindow *init();
 std::tuple<unsigned int, unsigned int, unsigned int>
 bindBuffers(const std::vector<objl::Vertex> &vertices,
@@ -21,6 +50,7 @@ GLuint bindTexture(std::string_view texturePath);
 void preRender();
 void updateShader(const Shader &Shader, const ModelParams &modelParams,
                   const Camera &camera);
+
 void render(auto const &rendercontainer,
             GLFWwindow *window) { // auto bc I am lazy and I change
                                   // my mind a lot
@@ -47,8 +77,7 @@ auto make_part(std::string_view path) {
  * I tried to avoid using runtime polymorphism
  * */
 inline void make_robot(std::unordered_map<RobotParts, PartType> &container) {
-  objl::Loader Loader;
-  container.insert({RobotParts::base, make_part<decltype(no_rotation)>(Paths::resources_base_obj.string())});
-  container.insert({RobotParts::upper_base, make_part<decltype(base_rotate)>(Paths::resources_upper_base_obj.string())});
-  container.insert({RobotParts::middle_arm, make_part<decltype(arm_rotate)>(Paths::resources_middle_arm_obj.string())});
+  container.insert({RobotParts::base, make_part<std::decay_t<decltype(no_rotation)>>(Paths::resources_base_obj.string())});
+  container.insert({RobotParts::upper_base, make_part<std::decay_t<decltype(base_rotate)>>(Paths::resources_upper_base_obj.string())});
+  container.insert({RobotParts::middle_arm, make_part<std::decay_t<decltype(arm_rotate)>>(Paths::resources_middle_arm_obj.string())});
 }

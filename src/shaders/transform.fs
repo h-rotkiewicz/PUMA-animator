@@ -37,5 +37,4 @@ void main() {
 
     FragColor = vec4(lighting, 1.0) * texColor;
     
-    
 }
