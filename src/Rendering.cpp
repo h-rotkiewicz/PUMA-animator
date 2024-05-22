@@ -4,34 +4,6 @@
 
 using buffer = unsigned int;
 
-std::tuple<GLuint, GLuint, GLuint> load_vxo(std::string_view path,
-                                            auto &vertices, auto &indices) {
-  objl::Loader Loader;
-  if (!Loader.LoadFile(path.data())) {
-    throw std::runtime_error("Failed to load OBJ file.");
-  }
-  vertices = Loader.LoadedVertices;
-  indices = Loader.LoadedIndices;
-  return bindBuffers(vertices, indices);
-}
-
-Part::Part(std::string_view obj_path) {
-    auto [VAO_, _, EBO_] =
-        load_vxo(obj_path, vertices, indices);
-    VAO.buffer = VAO_;
-    EBO.buffer = EBO_;
-  }
-
-void Part::Render() const {
-    glBindVertexArray(VAO.buffer);
-    CheckForErrors(std::string("Binding VAO: ") +  std::to_string(VAO.buffer) );
-    glDrawElements(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT,
-                   0); // traiangle strip Works better ???? why ??
-                       // GL_LINES_ADJACENCY also looks cool
-                       // GL_LINES also looks cool
-    CheckForErrors("Drawing elements");
-  }
-
 void processInput(GLFWwindow *window, Camera &camera) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     glfwSetWindowShouldClose(window, true);
@@ -88,6 +60,19 @@ GLFWwindow *init() {
  * the robot but for now, for testing purposes, this is fine. I will change this
  * after the shaders are working and the robot is rendered correctly.
  * */
+
+
+std::tuple<GLuint, GLuint, GLuint> load_vxo(std::string_view path,
+                                            std::vector<objl::Vertex> &vertices,
+                                            std::vector<unsigned int> &indices){
+  objl::Loader Loader;
+  if (!Loader.LoadFile(path.data())) {
+    throw std::runtime_error("Failed to load OBJ file.");
+  }
+  vertices = Loader.LoadedVertices;
+  indices = Loader.LoadedIndices;
+  return bindBuffers(vertices, indices);
+}
 
 std::tuple<buffer, buffer, buffer>
 bindBuffers(const std::vector<objl::Vertex> &vertices,
