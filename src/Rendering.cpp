@@ -32,7 +32,6 @@ GLFWwindow *init() {
   return window;
 }
 
-
 std::tuple<GLuint, GLuint, GLuint> load_vxo(std::string_view path,
                                             std::vector<objl::Vertex> &vertices,
                                             std::vector<unsigned int> &indices){

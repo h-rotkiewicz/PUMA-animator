@@ -13,7 +13,7 @@ struct Settings {
 };
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
-void processInput(GLFWwindow *window, Camera &camera, auto const & Parts);
+void processInput(GLFWwindow *window, Camera &camera, auto & Parts);
 
 void processInput(GLFWwindow *window, Camera &camera, auto  &Parts) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -34,14 +34,8 @@ void processInput(GLFWwindow *window, Camera &camera, auto  &Parts) {
     camera.change_radius(0.01);
   if(glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)
     camera.change_radius(-0.01);
-
-  //Example how to rotate
-  auto angle = 30.f;
-  auto Rotate = [&](auto &part) { part.rotate(angle);};
-  auto & part = Parts.at(RobotParts::middle_arm);
-
-  std::visit(Rotate, part);
 }
+
 GLFWwindow *init();
 std::tuple<unsigned int, unsigned int, unsigned int>
 bindBuffers(const std::vector<objl::Vertex> &vertices,
@@ -55,27 +49,25 @@ void render(auto const &rendercontainer,
             GLFWwindow *window) { // auto bc I am lazy and I change
                                   // my mind a lot
   for (const auto &[_, part] : rendercontainer) {
-    std::visit(Render, part);
+    part.Render();
   }
   CheckForErrors("render");
   glfwSwapBuffers(window);
   glfwPollEvents();
 }
 
-std::tuple<GLuint, GLuint, GLuint> load_vxo(std::string_view path,
-                                            std::vector<objl::Vertex> &vertices,
-                                            std::vector<unsigned int> &indices);
 
-template <typename CallBack>
-auto make_part(std::string_view path) {
-    std::vector<objl::Vertex> vertices;
-    std::vector<unsigned int> indices;
-    auto [VAO, VBO, EBO] = load_vxo(path, vertices, indices);
-    return Part<CallBack>(VAO, VBO, EBO, std::move(vertices), std::move(indices));
-}
 
-inline void make_robot(std::unordered_map<RobotParts, PartType> &container) {
-  container.insert({RobotParts::base, make_part<std::decay_t<decltype(no_rotation)>>(Paths::resources_base_obj.string())});
-  container.insert({RobotParts::upper_base, make_part<std::decay_t<decltype(base_rotate)>>(Paths::resources_upper_base_obj.string())});
-  container.insert({RobotParts::middle_arm, make_part<std::decay_t<decltype(arm_rotate)>>(Paths::resources_middle_arm_obj.string())});
+inline void make_robot(std::unordered_map<RobotParts, Part> &container) {
+  Shader shader(Paths::shaders_vs.c_str(), Paths::shaders_fs.c_str());
+  Shader shader1(Paths::shaders_vs.c_str(), Paths::shaders_fs.c_str());
+  Shader shader2(Paths::shaders_vs.c_str(), Paths::shaders_fs.c_str());
+  container.emplace(RobotParts::base, Part(Paths::resources_base_obj.string(), std::move(shader)));
+  container.emplace(RobotParts::upper_base, Part(Paths::resources_upper_base_obj.string(), std::move(shader1)));
+  container.emplace(RobotParts::middle_arm, Part(Paths::resources_middle_arm_obj.string(), std::move(shader2)));
+  //debug
+  for (auto &[name, part] : container) {
+    std::cout << "Part: " << static_cast<int>(name) ;
+    std::cout << " Shader ID: " << part.getShader().ID << std::endl;
+  }
 }

@@ -1,5 +1,7 @@
-/* Why does this file exist ? well because  clang-format gets a stroke if I include clang-format off and clang-format on in the main file 
- * and refuses to format the code properly. So I put all the includes in this file and include this file  */
+/* Why does this file exist ? well because  clang-format gets a stroke if I
+ * include clang-format off and clang-format on in the main file and refuses to
+ * format the code properly. So I put all the includes in this file and include
+ * this file  */
 #pragma once
 
 // clang-format off
@@ -11,10 +13,10 @@
 #include <glm/gtc/type_ptr.hpp>
 // clang-format on 
 
-#include <iostream>
-#include <variant>
-#include <vector>
 #include "OBJ_Loader.h"
+#include "shader.h"
+#include <iostream>
+#include <vector>
 
 inline void CheckForErrors(std::string_view message = "") {
   GLenum error = glGetError();
@@ -39,7 +41,6 @@ inline auto no_rotation = [](float angle) {
 
 inline auto Render = [](auto const &part) { part.Render(); };
 
-
 enum class RobotParts { base, upper_base, middle_arm };
 
 template <typename Destructor> class bufferWrapper {
@@ -53,20 +54,29 @@ std::tuple<GLuint, GLuint, GLuint>
 bindBuffers(const std::vector<objl::Vertex> &vertices,
             const std::vector<unsigned int> &indices);
 
+std::tuple<GLuint, GLuint, GLuint> load_vxo(std::string_view path,
+                                            std::vector<objl::Vertex> &vertices,
+                                            std::vector<unsigned int> &indices);
 
-template <typename RotateCallback> class Part {
+class Part {
   bufferWrapper<decltype(glDeleteBuffers)> VBO, EBO;
   bufferWrapper<decltype(glDeleteVertexArrays)> VAO;
   std::vector<objl::Vertex> vertices{};
   std::vector<unsigned int> indices{};
-
-
+  Shader shader;
 public:
-  Part( GLuint VAO, GLuint VBO, GLuint EBO, std::vector<objl::Vertex> && vert,  std::vector<unsigned int> && ind) : VAO{VAO}, VBO{VBO}, EBO{EBO} , vertices(std::move(vert)), indices(std::move(ind)){}
+  Part(std::string_view path, Shader &&shader_) : shader(std::move(shader_)){
+    auto [VAO_, VBO_, EBO_] = load_vxo(path, vertices, indices);
+    VAO.buffer = VAO_;
+    VBO.buffer = VBO_;
+    EBO.buffer = EBO_;
+  }
 
-  void rotate(float angle) { RotateCallback()(angle); }
+const auto& getShader() const { return shader; }
 
-  void Render() const {
+
+void Render() const {
+    shader.use();
     glBindVertexArray(VAO.buffer);
     CheckForErrors(std::string("Binding VAO: ") + std::to_string(VAO.buffer));
     glDrawElements(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT,
@@ -75,10 +85,9 @@ public:
                        // GL_LINES also looks cool
     CheckForErrors("Drawing elements");
   }
+
 };
 
-using PartType =
-    std::variant<Part<decltype(arm_rotate)>, Part<decltype(base_rotate)>,
-                 Part<decltype(no_rotation)>>;
-
-
+// using PartType =
+//     std::variant<Part<decltype(arm_rotate)>, Part<decltype(base_rotate)>,
+//                  Part<decltype(no_rotation)>>;

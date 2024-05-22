@@ -18,9 +18,21 @@ public:
     // constructor generates the shader on the fly
     // ------------------------------------------------------------------------
     Shader(const char* vertexPath, const char* fragmentPath);
+    Shader(Shader const &other) = delete; //not sure if copying a shader is a good idea so delete for now
+    Shader &operator=(Shader const &other) = delete;
+    Shader(Shader &&other) {
+        ID = other.ID;
+        other.ID = 0;
+    }
+    Shader &operator=(Shader &&other) {
+        ID = other.ID;
+        other.ID = 0;
+        return *this;
+    }
+
     // activate the shader
     // ------------------------------------------------------------------------
-    void use() ;
+    void use() const ;
     // utility uniform functions
     // ------------------------------------------------------------------------
     void setBool(const std::string &name, bool value) const;

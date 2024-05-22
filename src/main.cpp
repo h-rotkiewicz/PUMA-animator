@@ -15,7 +15,7 @@ int main() {
   Camera camera(Radius, 0, modelParams.modelPosition);
   Shader shader(Paths::shaders_vs.c_str(), Paths::shaders_fs.c_str());
 
-  std::unordered_map<RobotParts, PartType> Parts;
+  std::unordered_map<RobotParts, Part> Parts;
   make_robot(Parts);
 
   shader.use();
