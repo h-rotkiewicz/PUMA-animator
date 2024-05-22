@@ -5,6 +5,7 @@
 #include "Rendering.h"
 #include "logger.h"
 #include <cmath>
+#include "defines.h"
 
 
 int main() {
@@ -37,7 +38,6 @@ int main() {
 #endif
 
   Shader.use();
-  Shader.setInt("texture", 0);
 
   while (!glfwWindowShouldClose(window)) {
     processInput(window,  camera);

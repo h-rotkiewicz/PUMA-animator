@@ -19,6 +19,10 @@ void processInput(GLFWwindow *window, Camera &camera) {
     camera.change_vert_offset(0.01);
   if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
     camera.change_vert_offset(-0.01);
+  if(glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
+    camera.change_radius(0.01);
+  if(glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)
+    camera.change_radius(-0.01);
 }
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {

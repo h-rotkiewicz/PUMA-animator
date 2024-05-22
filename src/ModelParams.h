@@ -1,6 +1,7 @@
 #pragma once
 #include <glm/ext/quaternion_transform.hpp>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 struct ModelParams {
   float angle{};
@@ -21,6 +22,7 @@ struct Camera {
   glm::vec3 cameraPosition;
 
   void change_vert_offset(float change) { cameraPosition.y += change; cameraTarget.y += change; }
+  void change_radius(float change) { cameraPosition.z += change; }
 
   private:
 
