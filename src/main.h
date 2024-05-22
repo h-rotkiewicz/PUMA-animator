@@ -17,3 +17,12 @@
 #include "ModelParams.h"
 #include "shader.h"
 #include "OBJ_Loader.h"
+
+inline void CheckForErrors(std::string_view message = "") {
+  GLenum error = glGetError();
+  if (error != GL_NO_ERROR) {
+    std::cerr << message << " || OpenGL Error: " << error << std::endl;
+  }
+}
+
+

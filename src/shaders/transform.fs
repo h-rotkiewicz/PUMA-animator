@@ -14,7 +14,7 @@ uniform vec3 lightColor;
 
 void main() {
     // Sample the texture
-    vec4 texColor = texture(texture1, TexCoord);
+    vec4 texColor = vec4(0.5, 0.5 ,0.5 ,1); //texture(texture1, TexCoord);
 
     // Ambient
     float ambientStrength = 0.1;

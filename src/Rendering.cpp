@@ -4,6 +4,34 @@
 
 using buffer = unsigned int;
 
+std::tuple<GLuint, GLuint, GLuint> load_vxo(std::string_view path,
+                                            auto &vertices, auto &indices) {
+  objl::Loader Loader;
+  if (!Loader.LoadFile(path.data())) {
+    throw std::runtime_error("Failed to load OBJ file.");
+  }
+  vertices = Loader.LoadedVertices;
+  indices = Loader.LoadedIndices;
+  return bindBuffers(vertices, indices);
+}
+
+Part::Part(std::string_view obj_path) {
+    auto [VAO_, _, EBO_] =
+        load_vxo(obj_path, vertices, indices);
+    VAO.buffer = VAO_;
+    EBO.buffer = EBO_;
+  }
+
+void Part::Render() const {
+    glBindVertexArray(VAO.buffer);
+    CheckForErrors(std::string("Binding VAO: ") +  std::to_string(VAO.buffer) );
+    glDrawElements(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT,
+                   0); // traiangle strip Works better ???? why ??
+                       // GL_LINES_ADJACENCY also looks cool
+                       // GL_LINES also looks cool
+    CheckForErrors("Drawing elements");
+  }
+
 void processInput(GLFWwindow *window, Camera &camera) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     glfwSetWindowShouldClose(window, true);
@@ -25,7 +53,8 @@ void processInput(GLFWwindow *window, Camera &camera) {
     camera.change_radius(-0.01);
 }
 
-void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
+
+void framebuffer_size_callback( GLFWwindow * window, int width, int height) {
   glViewport(0, 0, width, height);
 }
 
@@ -37,7 +66,7 @@ GLFWwindow *init() {
 
   GLFWwindow *window = glfwCreateWindow(
       Settings::SCR_WIDTH, Settings::SCR_HEIGHT, "Puma", NULL, NULL);
-  if (window == NULL) {
+  if (window == nullptr) {
     glfwTerminate();
     throw std::runtime_error("Failed to create GLFW window");
   }
@@ -77,6 +106,7 @@ bindBuffers(const std::vector<objl::Vertex> &vertices,
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int),
                indices.data(), GL_STATIC_DRAW);
+  CheckForErrors("bindBuffers");
 
   // position attribute
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(objl::Vertex),
@@ -90,11 +120,13 @@ bindBuffers(const std::vector<objl::Vertex> &vertices,
   glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(objl::Vertex),
                         (void *)offsetof(objl::Vertex, TextureCoordinate));
   glEnableVertexAttribArray(2);
+  CheckForErrors("Attributes");
 
   glBindVertexArray(0); // Unbind VAO
   return {VAO, VBO, EBO};
 }
 
+[[deprecated("has some bugs do not use")]]
 buffer bindTexture(std::string_view texturePath) {
     GLuint textureID;
   
@@ -113,7 +145,7 @@ buffer bindTexture(std::string_view texturePath) {
     unsigned char *data = stbi_load(texturePath.data(), &width, &height, &nrChannels, 0);
 
     if (data) {
-        GLenum format;
+        GLenum format{};
         if (nrChannels == 1)
             format = GL_RED;
         else if (nrChannels == 3)
@@ -131,17 +163,16 @@ buffer bindTexture(std::string_view texturePath) {
     return textureID; // Return the texture ID
 }
 
-void preRender(GLFWwindow *window, const buffer &texture1,
-               ModelParams &modelParams) {
+void preRender() {
 
   glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void updateShader(Shader &Shader, const ModelParams &modelParams,
+void updateShader(Shader const &Shader, const ModelParams &modelParams,
                   const Camera &Camera) {
-  glm::mat4 view = glm::mat4(1.0f);
-  glm::mat4 projection = glm::mat4(1.0f);
+  glm::mat4 view(1.0f);
+  glm::mat4 projection(1.0f);
   projection = glm::perspective(
       glm::radians(45.0f),
       (float)Settings::SCR_WIDTH / (float)Settings::SCR_HEIGHT, 0.1f, 100.0f);
@@ -155,7 +186,7 @@ void updateShader(Shader &Shader, const ModelParams &modelParams,
   Shader.setVec3("lightPos", Camera.cameraPosition); // I think it makes sense for max visibility
   Shader.setVec3("viewPos", Camera.cameraPosition);
 
-  glm::mat4 model = glm::mat4(1.0f);
+  glm::mat4 model(1.0f);
   model = glm::translate(model, modelParams.modelPosition);
   model = glm::rotate(model, glm::radians(modelParams.angle),
                       modelParams.RotationAxis);

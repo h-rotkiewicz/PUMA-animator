@@ -6,26 +6,49 @@ struct Settings {
   constexpr static unsigned int SCR_WIDTH = 800;
   constexpr static unsigned int SCR_HEIGHT = 600;
 };
+template<typename Destructor >
+class bufferWrapper {
+public:
+  ~bufferWrapper(){
+  };
+
+  GLuint buffer{};
+};
+
+class Part {
+  bufferWrapper<decltype(glDeleteBuffers)> VBO, EBO;
+  bufferWrapper<decltype(glDeleteVertexArrays)> VAO;
+  std::vector<objl::Vertex> vertices{};
+  std::vector<unsigned int> indices{};
+public:
+  Part(std::string_view obj_path);
+  void Render() const;
+};
 
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window, Camera &camera);
-void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 GLFWwindow *init();
 std::tuple<unsigned int, unsigned int, unsigned int>
 bindBuffers(const std::vector<objl::Vertex> &vertices,
             const std::vector<unsigned int> &indices);
-GLuint bindTexture( std::string_view texturePath);
-void preRender( GLFWwindow *window, const GLuint & texture1, ModelParams &modelParams);
-void updateShader(Shader &Shader, const ModelParams &modelParams, const Camera &camera);
+GLuint bindTexture(std::string_view texturePath);
+void preRender();
+void updateShader(const Shader &Shader, const ModelParams &modelParams,
+                  const Camera &camera);
+void render(auto const &rendercontainer,
+            GLFWwindow *window) { // auto bc I am lazy and I change
+                                  // my mind a lot
+  for (auto const &part : rendercontainer) {
+    part.Render();
+  }
+  CheckForErrors("render");
+  glfwSwapBuffers(window);
+  glfwPollEvents();
+}
 
-void render(const GLuint &VAO, const auto &indices, GLFWwindow * window) { //auto bc I am lazy and I change
-                                                                           //my mind a lot
-    glBindVertexArray(VAO);
-    glDrawElements( GL_TRIANGLE_STRIP , indices.size(), GL_UNSIGNED_INT,
-                   0); // traiangle strip Works better ???? why ?? 
-                       // GL_LINES_ADJACENCY also looks cool
-                       // GL_LINES also looks cool
-    glfwSwapBuffers(window);
-    glfwPollEvents();
+void make_robot(auto & container){
+  container.emplace_back(Paths::resources_base_obj.string());
+  container.emplace_back(Paths::resources_upper_base_obj.string());
+  container.emplace_back(Paths::resources_middle_arm_obj.string());
 }

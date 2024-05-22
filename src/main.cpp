@@ -3,53 +3,31 @@
 #define DEBUG
 #include "main.h"
 #include "Rendering.h"
+#include "defines.h"
 #include "logger.h"
 #include <cmath>
-#include "defines.h"
 
 
 int main() {
   int Radius = 3;
   GLFWwindow *window = init();
-  objl::Loader Loader;
   ModelParams modelParams;
-  Camera camera(Radius, 0,modelParams.modelPosition);
+  Camera camera(Radius, 0, modelParams.modelPosition);
   Shader Shader(Paths::shaders_vs.c_str(), Paths::shaders_fs.c_str());
-  if (!Loader.LoadFile(Paths::resources_puma_obj)) {
-    std::cerr << "Failed to load OBJ file." << std::endl;
-    return -1;
-  }
 
-  auto vertices = Loader.LoadedVertices;
-  auto indices = Loader.LoadedIndices;
-  auto [VAO, VBO, EBO] = bindBuffers(vertices, indices);
-  GLuint texture1 = bindTexture(Paths::resources_metalic.string());
-
-#ifdef DEBUG
-  LOG::Logger.log("Loaded Vertices: " + std::to_string(vertices.size()),
-             ColorMod::Code::FG_GREEN);
-  LOG::Logger.log("Loaded Indices: " + std::to_string(indices.size()),
-             ColorMod::Code::FG_GREEN);
-
-  LOG::Logger.log("Model Position: " + std::to_string(modelParams.modelPosition.x) +
-                 " " + std::to_string(modelParams.modelPosition.y) + " " +
-                 std::to_string(modelParams.modelPosition.z),
-             ColorMod::Code::FG_BLUE);
-#endif
+  std::vector<Part> Parts;
+  make_robot(Parts);
 
   Shader.use();
-
+  // std::cout << "VAO: " << Parts[0].get_vao()<< std::endl;
   while (!glfwWindowShouldClose(window)) {
-    processInput(window,  camera);
-    preRender(window, texture1, modelParams);
+    processInput(window, camera);
+    preRender();
     updateShader(Shader, modelParams, camera);
-    render(VAO, indices, window);
+    render(Parts, window);
     // modelParams.angle = 2 * cos(glfwGetTime());
+    CheckForErrors("Something went wrong ");
   }
-
-  glDeleteVertexArrays(1, &VAO);
-  glDeleteBuffers(1, &VBO);
-  glDeleteBuffers(1, &EBO);
 
   glfwTerminate();
   return 0;
