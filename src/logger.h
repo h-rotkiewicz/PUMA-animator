@@ -29,7 +29,7 @@ concept Writable = requires(T t, std::ostream &os) {
   { os << t } -> std::same_as<std::ostream &>;
 };
 
-class logger {
+inline class logger {
 private:
   std::ofstream outFile_;
 
@@ -63,5 +63,5 @@ public:
     outFile_ << oss.str() << " || " << mess << '\n';
   }
 #endif
-};
+} Logger("Log.txt");
 } // namespace LOG

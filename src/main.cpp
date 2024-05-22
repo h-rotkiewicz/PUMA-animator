@@ -6,13 +6,13 @@
 #include "logger.h"
 #include <cmath>
 
+
 int main() {
   int Radius = 3;
   GLFWwindow *window = init();
   objl::Loader Loader;
   ModelParams modelParams;
   Camera camera(Radius, 0,modelParams.modelPosition);
-  LOG::logger logger("Log.txt");
   Shader Shader(Paths::shaders_vs.c_str(), Paths::shaders_fs.c_str());
   if (!Loader.LoadFile(Paths::resources_puma_obj)) {
     std::cerr << "Failed to load OBJ file." << std::endl;
@@ -25,12 +25,12 @@ int main() {
   GLuint texture1 = bindTexture();
 
 #ifdef DEBUG
-  logger.log("Loaded Vertices: " + std::to_string(vertices.size()),
+  LOG::Logger.log("Loaded Vertices: " + std::to_string(vertices.size()),
              ColorMod::Code::FG_GREEN);
-  logger.log("Loaded Indices: " + std::to_string(indices.size()),
+  LOG::Logger.log("Loaded Indices: " + std::to_string(indices.size()),
              ColorMod::Code::FG_GREEN);
 
-  logger.log("Model Position: " + std::to_string(modelParams.modelPosition.x) +
+  LOG::Logger.log("Model Position: " + std::to_string(modelParams.modelPosition.x) +
                  " " + std::to_string(modelParams.modelPosition.y) + " " +
                  std::to_string(modelParams.modelPosition.z),
              ColorMod::Code::FG_BLUE);

@@ -2,24 +2,22 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-
 using buffer = unsigned int;
-
 
 void processInput(GLFWwindow *window, Camera &camera) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     glfwSetWindowShouldClose(window, true);
-  if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+  if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
     camera.Orbit(1.f, glm::vec3(1.0f, 0.0f, 0.0f));
-  if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+  if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
     camera.Orbit(-1.f, glm::vec3(1.0f, 0.0f, 0.0f));
-  if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+  if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
     camera.Orbit(1.f, glm::vec3(0.0f, 1.0f, 0.0f));
-  if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+  if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
     camera.Orbit(-1.f, glm::vec3(0.0f, 1.0f, 0.0f));
-  if(glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+  if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
     camera.change_vert_offset(0.01);
-  if(glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+  if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
     camera.change_vert_offset(-0.01);
 }
 
@@ -27,15 +25,14 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
   glViewport(0, 0, width, height);
 }
 
-
 GLFWwindow *init() {
   glfwInit();
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-  GLFWwindow *window =
-      glfwCreateWindow(Settings::SCR_WIDTH, Settings::SCR_HEIGHT, "Puma", NULL, NULL);
+  GLFWwindow *window = glfwCreateWindow(
+      Settings::SCR_WIDTH, Settings::SCR_HEIGHT, "Puma", NULL, NULL);
   if (window == NULL) {
     std::cout << "Failed to create GLFW window" << std::endl;
     glfwTerminate();
@@ -52,6 +49,15 @@ GLFWwindow *init() {
   glEnable(GL_DEPTH_TEST);
   return window;
 }
+
+/* bindXXXX functions are ugly and I do realise that, but since they are
+ * temporary I will make them sexier later on. They will have to be made more
+ * robust anyway since rendering the whole robot as a big blob is not a good
+ * idea, The whole robot is not a single object, but a collection of objects, so
+ * different texutres and shaders will have to be used for different parts of
+ * the robot but for now, for testing purposes, this is fine. I will change this
+ * after the shaders are working and the robot is rendered correctly.
+ * */
 
 std::tuple<buffer, buffer, buffer>
 bindBuffers(const std::vector<objl::Vertex> &vertices,
@@ -75,6 +81,14 @@ bindBuffers(const std::vector<objl::Vertex> &vertices,
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(objl::Vertex),
                         (void *)offsetof(objl::Vertex, Position));
   glEnableVertexAttribArray(0);
+  // normal attribute
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(objl::Vertex),
+                        (void *)offsetof(objl::Vertex, Normal));
+  glEnableVertexAttribArray(1);
+  // Tex coordinate attribute
+  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(objl::Vertex),
+                        (void *)offsetof(objl::Vertex, TextureCoordinate));
+  glEnableVertexAttribArray(2);
 
   glBindVertexArray(0); // Unbind VAO
   return {VAO, VBO, EBO};
@@ -109,8 +123,8 @@ buffer bindTexture() {
   return texture1;
 }
 
-
-void preRender( GLFWwindow *window, const buffer & texture1, ModelParams &modelParams) {
+void preRender(GLFWwindow *window, const buffer &texture1,
+               ModelParams &modelParams) {
 
   glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -119,28 +133,27 @@ void preRender( GLFWwindow *window, const buffer & texture1, ModelParams &modelP
   glBindTexture(GL_TEXTURE_2D, texture1);
 }
 
-void updateShader(Shader &Shader, const ModelParams &modelParams, const Camera &Camera) {
-    glm::mat4 view = glm::mat4(1.0f);
-    glm::mat4 projection = glm::mat4(1.0f);
-    projection =
-        glm::perspective(glm::radians(45.0f),
-                         (float)Settings::SCR_WIDTH / (float)Settings::SCR_HEIGHT, 0.1f, 100.0f);
-    // view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-    view = glm::lookAt(Camera.cameraPosition, Camera.getCameraTarget() ,
-                       Camera.getCameraUp());
+void updateShader(Shader &Shader, const ModelParams &modelParams,
+                  const Camera &Camera) {
+  glm::mat4 view = glm::mat4(1.0f);
+  glm::mat4 projection = glm::mat4(1.0f);
+  projection = glm::perspective(
+      glm::radians(45.0f),
+      (float)Settings::SCR_WIDTH / (float)Settings::SCR_HEIGHT, 0.1f, 100.0f);
+  // view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+  view = glm::lookAt(Camera.cameraPosition, Camera.getCameraTarget(),
+                     Camera.getCameraUp());
 
-    Shader.setMat4("projection", projection);
-    Shader.setMat4("view", view);
-    Shader.setVec3("objectColor",
-                   glm::vec3(1.0f, 0.5f,
-                             0.31f)); // TODO: change color to somthing sensible
+  Shader.setMat4("projection", projection);
+  Shader.setMat4("view", view);
+  Shader.setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f)); 
+  Shader.setVec3("lightPos", Camera.cameraPosition); // TODO: I don't know if this make sense but it looks nice
+  Shader.setVec3("viewPos", Camera.cameraPosition);
 
+  glm::mat4 model = glm::mat4(1.0f);
+  model = glm::translate(model, modelParams.modelPosition);
+  model = glm::rotate(model, glm::radians(modelParams.angle),
+                      modelParams.RotationAxis);
 
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, modelParams.modelPosition);
-    model = glm::rotate(model, glm::radians(modelParams.angle),
-                        modelParams.RotationAxis);
-
-    Shader.setMat4("model", model);
+  Shader.setMat4("model", model);
 }
-
