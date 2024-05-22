@@ -9,7 +9,7 @@ out vec4 FragColor;
 
 uniform sampler2D texture1;
 uniform vec3 lightPos;  // The position of the light source
-uniform vec3 viewPos;   // I don't get it how this is different from view but ok 
+uniform vec3 viewPos;   // The position of the camera
 uniform vec3 lightColor;
 
 void main() {
@@ -33,7 +33,7 @@ void main() {
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
     vec3 specular = specularStrength * spec * lightColor;
     
-    vec3 lighting = (ambient + diffuse + specular) *  texColor.rgb;
+    vec3 lighting = (ambient + diffuse + specular) ;
 
     FragColor = vec4(lighting, 1.0) * texColor;
     

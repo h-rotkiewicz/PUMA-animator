@@ -1,12 +1,12 @@
 #version 330 core
 
-layout (location = 0) in vec3 aPos;      // Position attribute
-layout (location = 1) in vec3 aNormal;   // Normal attribute
-layout (location = 2) in vec2 aTexCoord; // Texture coordinate attribute
+layout (location = 0) in vec3 aPos;      
+layout (location = 1) in vec3 aNormal;   
+layout (location = 2) in vec2 aTexCoord; 
 
-out vec2 TexCoord; // Passing texture coordinates to the fragment shader
-out vec3 FragPos;  // Passing position to the fragment shader
-out vec3 Normal;   // Passing normal to the fragment shader
+out vec2 TexCoord; 
+out vec3 FragPos;  
+out vec3 Normal;   
 
 uniform mat4 model;
 uniform mat4 view;

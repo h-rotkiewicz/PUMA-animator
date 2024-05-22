@@ -34,7 +34,6 @@ GLFWwindow *init() {
   GLFWwindow *window = glfwCreateWindow(
       Settings::SCR_WIDTH, Settings::SCR_HEIGHT, "Puma", NULL, NULL);
   if (window == NULL) {
-    std::cout << "Failed to create GLFW window" << std::endl;
     glfwTerminate();
     throw std::runtime_error("Failed to create GLFW window");
   }
@@ -42,10 +41,8 @@ GLFWwindow *init() {
   glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-    std::cout << "Failed to initialize GLAD" << std::endl;
     throw std::runtime_error("Failed to init GLAD ");
   }
-
   glEnable(GL_DEPTH_TEST);
   return window;
 }
@@ -94,33 +91,40 @@ bindBuffers(const std::vector<objl::Vertex> &vertices,
   return {VAO, VBO, EBO};
 }
 
-buffer bindTexture() {
-  unsigned int texture1;
-  // texture 1
-  // ---------
-  glGenTextures(1, &texture1);
-  glBindTexture(GL_TEXTURE_2D, texture1);
-  // set the texture wrapping parameters
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  // set texture filtering parameters
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  // load image, create texture and generate mipmaps
-  int width, height, nrChannels;
-  stbi_set_flip_vertically_on_load(
-      true); // tell stb_image.h to flip loaded texture's on the y-axis.
-  unsigned char *data = stbi_load(Paths::resources_metalic.c_str(), &width,
-                                  &height, &nrChannels, 0);
-  if (data) {
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
-                 GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-  } else {
-    std::cout << "Failed to load texture" << std::endl;
-  }
-  stbi_image_free(data);
-  return texture1;
+buffer bindTexture(std::string_view texturePath) {
+    GLuint textureID;
+  
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+
+    // Configure the wrapping and filtering options
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // or GL_CLAMP_TO_EDGE
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); // or GL_CLAMP_TO_EDGE
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  
+    // Load the texture image
+    int width, height, nrChannels;
+    stbi_set_flip_vertically_on_load(true); // Flipping the texture vertically if needed
+    unsigned char *data = stbi_load(texturePath.data(), &width, &height, &nrChannels, 0);
+
+    if (data) {
+        GLenum format;
+        if (nrChannels == 1)
+            format = GL_RED;
+        else if (nrChannels == 3)
+            format = GL_RGB;
+        else if (nrChannels == 4)
+            format = GL_RGBA;
+
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    } else {
+        std::cout << "Failed to load texture: " << texturePath << std::endl;
+    }
+
+    stbi_image_free(data);
+    return textureID; // Return the texture ID
 }
 
 void preRender(GLFWwindow *window, const buffer &texture1,
@@ -128,9 +132,6 @@ void preRender(GLFWwindow *window, const buffer &texture1,
 
   glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, texture1);
 }
 
 void updateShader(Shader &Shader, const ModelParams &modelParams,
@@ -146,8 +147,8 @@ void updateShader(Shader &Shader, const ModelParams &modelParams,
 
   Shader.setMat4("projection", projection);
   Shader.setMat4("view", view);
-  Shader.setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f)); 
-  Shader.setVec3("lightPos", Camera.cameraPosition); // TODO: I don't know if this make sense but it looks nice
+  Shader.setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
+  Shader.setVec3("lightPos", Camera.cameraPosition); // I think it makes sense for max visibility
   Shader.setVec3("viewPos", Camera.cameraPosition);
 
   glm::mat4 model = glm::mat4(1.0f);

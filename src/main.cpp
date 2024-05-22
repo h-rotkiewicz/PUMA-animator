@@ -22,7 +22,7 @@ int main() {
   auto vertices = Loader.LoadedVertices;
   auto indices = Loader.LoadedIndices;
   auto [VAO, VBO, EBO] = bindBuffers(vertices, indices);
-  GLuint texture1 = bindTexture();
+  GLuint texture1 = bindTexture(Paths::resources_metalic.string());
 
 #ifdef DEBUG
   LOG::Logger.log("Loaded Vertices: " + std::to_string(vertices.size()),
@@ -36,7 +36,6 @@ int main() {
              ColorMod::Code::FG_BLUE);
 #endif
 
-  glEnable(GL_DEPTH_TEST);
   Shader.use();
   Shader.setInt("texture", 0);
 
@@ -45,7 +44,7 @@ int main() {
     preRender(window, texture1, modelParams);
     updateShader(Shader, modelParams, camera);
     render(VAO, indices, window);
-    modelParams.angle = 2 * cos(glfwGetTime());
+    // modelParams.angle = 2 * cos(glfwGetTime());
   }
 
   glDeleteVertexArrays(1, &VAO);
