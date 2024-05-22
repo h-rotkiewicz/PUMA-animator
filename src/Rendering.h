@@ -73,9 +73,7 @@ auto make_part(std::string_view path) {
     auto [VAO, VBO, EBO] = load_vxo(path, vertices, indices);
     return Part<CallBack>(VAO, VBO, EBO, std::move(vertices), std::move(indices));
 }
-/* I feel as tho I need to explain myself, so... why is this so fucked up ?
- * I tried to avoid using runtime polymorphism
- * */
+
 inline void make_robot(std::unordered_map<RobotParts, PartType> &container) {
   container.insert({RobotParts::base, make_part<std::decay_t<decltype(no_rotation)>>(Paths::resources_base_obj.string())});
   container.insert({RobotParts::upper_base, make_part<std::decay_t<decltype(base_rotate)>>(Paths::resources_upper_base_obj.string())});
