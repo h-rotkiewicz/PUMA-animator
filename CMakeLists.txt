@@ -10,6 +10,8 @@ find_package( OpenGL REQUIRED )
 set( GLFW_BUILD_DOCS OFF CACHE BOOL  "GLFW lib only" )
 set( GLFW_INSTALL OFF CACHE BOOL  "GLFW lib only" )
 set( GLAD_GL "" )
+add_compile_definitions(SHADERS_DIR="${CMAKE_SOURCE_DIR}/src/shaders/")
+add_compile_definitions(RESOURCES_DIR="${CMAKE_SOURCE_DIR}/src/textures/")
 
 # # option( USE-GLFW-GLAD "Use GLAD from GLFW" ON )
 #
