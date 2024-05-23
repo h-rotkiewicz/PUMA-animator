@@ -1,6 +1,6 @@
 #include "shader.h"
 // From https://learnopengl.com/Getting-started/Shaders
-/* TODO: Optimize the code not load the same file multiple times but if the file had been just compile it and assign the Shader::ID*/
+/* TODO: Optimize the code to not load the same file multiple times but if the file had been loaded just compile it and assign the Shader::ID*/
 Shader::Shader(const char* vertexPath, const char* fragmentPath)
     {
       // 1. retrieve the vertex/fragment source code from filePath
@@ -55,31 +55,23 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath)
         glDeleteShader(vertex);
         glDeleteShader(fragment);
     }
-    // activate the shader
-    // ------------------------------------------------------------------------
     void Shader::use() const 
     { 
         glUseProgram(ID); 
     }
-    // utility uniform functions
-    // ------------------------------------------------------------------------
     void Shader::setBool(const std::string &name, bool value) const
     {         
         glUniform1i(glGetUniformLocation(ID, name.c_str()), (int)value); 
     }
-    // ------------------------------------------------------------------------
     void Shader::setInt(const std::string &name, int value) const
     { 
         glUniform1i(glGetUniformLocation(ID, name.c_str()), value); 
     }
-    // ------------------------------------------------------------------------
     void Shader::setFloat(const std::string &name, float value) const
     { 
         glUniform1f(glGetUniformLocation(ID, name.c_str()), value); 
     }
 
-    // utility function for checking shader compilation/linking errors.
-    // ------------------------------------------------------------------------
     void Shader::checkCompileErrors(unsigned int shader, std::string type)
     {
         int success;
