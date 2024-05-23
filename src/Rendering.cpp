@@ -1,12 +1,11 @@
 #include "Rendering.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#include "settings.h"
 
 using buffer = unsigned int;
 
-
-
-void framebuffer_size_callback( GLFWwindow * window, int width, int height) {
+void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
   glViewport(0, 0, width, height);
 }
 
@@ -32,92 +31,60 @@ GLFWwindow *init() {
   return window;
 }
 
-std::tuple<GLuint, GLuint, GLuint> load_vxo(std::string_view path,
-                                            std::vector<objl::Vertex> &vertices,
-                                            std::vector<unsigned int> &indices){
-  objl::Loader Loader;
-  if (!Loader.LoadFile(path.data())) {
-    std::cerr << "Failed to load OBJ file."<< path.data() << std::endl;
-    throw std::runtime_error("Failed to load OBJ file.");
-
+void render(std::unordered_map<RobotParts, Part> const &rendercontainer,
+            std::unordered_map<RobotParts, Shader> const &shaders,
+            GLFWwindow *window) { // auto bc I am lazy and I change
+                                  // my mind a lot
+  for (const auto &[RobotPart, part] : rendercontainer) {
+    part.Render(shaders.at(RobotPart));
   }
-  vertices = Loader.LoadedVertices;
-  indices = Loader.LoadedIndices;
-  return bindBuffers(vertices, indices);
+  CheckForErrors("render");
+  glfwSwapBuffers(window);
+  glfwPollEvents();
 }
 
-std::tuple<buffer, buffer, buffer>
-bindBuffers(const std::vector<objl::Vertex> &vertices,
-            const std::vector<unsigned int> &indices) {
-  buffer VBO, VAO, EBO;
-  glGenVertexArrays(1, &VAO);
-  glGenBuffers(1, &VBO);
-  glGenBuffers(1, &EBO);
 
-  glBindVertexArray(VAO);
+[[deprecated("has some bugs do not use")]] buffer
+bindTexture(std::string_view texturePath) {
+  GLuint textureID;
 
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(objl::Vertex),
-               vertices.data(), GL_STATIC_DRAW);
+  glGenTextures(1, &textureID);
+  glBindTexture(GL_TEXTURE_2D, textureID);
 
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int),
-               indices.data(), GL_STATIC_DRAW);
-  CheckForErrors("bindBuffers");
+  // Configure the wrapping and filtering options
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+                  GL_REPEAT); // or GL_CLAMP_TO_EDGE
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
+                  GL_REPEAT); // or GL_CLAMP_TO_EDGE
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                  GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-  // position attribute
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(objl::Vertex),
-                        (void *)offsetof(objl::Vertex, Position));
-  glEnableVertexAttribArray(0);
-  // normal attribute
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(objl::Vertex),
-                        (void *)offsetof(objl::Vertex, Normal));
-  glEnableVertexAttribArray(1);
-  // Tex coordinate attribute
-  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(objl::Vertex),
-                        (void *)offsetof(objl::Vertex, TextureCoordinate));
-  glEnableVertexAttribArray(2);
-  CheckForErrors("Attributes");
+  // Load the texture image
+  int width, height, nrChannels;
+  stbi_set_flip_vertically_on_load(
+      true); // Flipping the texture vertically if needed
+  unsigned char *data =
+      stbi_load(texturePath.data(), &width, &height, &nrChannels, 0);
 
-  glBindVertexArray(0); // Unbind VAO
-  return {VAO, VBO, EBO};
-}
+  if (data) {
+    GLenum format{};
+    if (nrChannels == 1)
+      format = GL_RED;
+    else if (nrChannels == 3)
+      format = GL_RGB;
+    else if (nrChannels == 4)
+      format = GL_RGBA;
 
-[[deprecated("has some bugs do not use")]]
-buffer bindTexture(std::string_view texturePath) {
-    GLuint textureID;
-  
-    glGenTextures(1, &textureID);
-    glBindTexture(GL_TEXTURE_2D, textureID);
+    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format,
+                 GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+  } else {
+    std::cout << "Failed to load texture: " << texturePath << std::endl;
+  }
 
-    // Configure the wrapping and filtering options
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // or GL_CLAMP_TO_EDGE
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); // or GL_CLAMP_TO_EDGE
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  
-    // Load the texture image
-    int width, height, nrChannels;
-    stbi_set_flip_vertically_on_load(true); // Flipping the texture vertically if needed
-    unsigned char *data = stbi_load(texturePath.data(), &width, &height, &nrChannels, 0);
-
-    if (data) {
-        GLenum format{};
-        if (nrChannels == 1)
-            format = GL_RED;
-        else if (nrChannels == 3)
-            format = GL_RGB;
-        else if (nrChannels == 4)
-            format = GL_RGBA;
-
-        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    } else {
-        std::cout << "Failed to load texture: " << texturePath << std::endl;
-    }
-
-    stbi_image_free(data);
-    return textureID; // Return the texture ID
+  stbi_image_free(data);
+  return textureID; // Return the texture ID
 }
 
 void preRender() {
@@ -126,27 +93,3 @@ void preRender() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void updateShader(Shader const &Shader, const ModelParams &modelParams,
-                  const Camera &Camera) {
-  glm::mat4 view(1.0f);
-  glm::mat4 projection(1.0f);
-  projection = glm::perspective(
-      glm::radians(45.0f),
-      (float)Settings::SCR_WIDTH / (float)Settings::SCR_HEIGHT, 0.1f, 100.0f);
-  // view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-  view = glm::lookAt(Camera.cameraPosition, Camera.getCameraTarget(),
-                     Camera.getCameraUp());
-
-  Shader.setMat4("projection", projection);
-  Shader.setMat4("view", view);
-  Shader.setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
-  Shader.setVec3("lightPos", Camera.cameraPosition); // I think it makes sense for max visibility
-  Shader.setVec3("viewPos", Camera.cameraPosition);
-
-  glm::mat4 model(1.0f);
-  model = glm::translate(model, modelParams.modelPosition);
-  model = glm::rotate(model, glm::radians(modelParams.angle),
-                      modelParams.RotationAxis);
-
-  Shader.setMat4("model", model);
-}

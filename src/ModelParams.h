@@ -3,12 +3,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-struct ModelParams {
-  float angle{};
-  glm::vec3 RotationAxis{1.0f, 1.0f, 1.0f};
-  glm::vec3 modelPosition{0.0f, -0.5f, 0.0f};
-};
-
 struct Camera {
   Camera(int Radius, int vert_offset, glm::vec3 const & Target) : cameraPosition{0.0f, 0.0f + vert_offset, Radius}, cameraTarget{Target} {}
 

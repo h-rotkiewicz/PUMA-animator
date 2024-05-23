@@ -1,5 +1,6 @@
 #include "shader.h"
 // From https://learnopengl.com/Getting-started/Shaders
+/* TODO: Optimize the code not load the same file multiple times but if the file had been just compile it and assign the Shader::ID*/
 Shader::Shader(const char* vertexPath, const char* fragmentPath)
     {
       // 1. retrieve the vertex/fragment source code from filePath
