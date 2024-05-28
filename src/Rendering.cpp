@@ -31,17 +31,6 @@ GLFWwindow *init() {
   return window;
 }
 
-void render(std::unordered_map<RobotParts, Part> const &rendercontainer,
-            std::unordered_map<RobotParts, Shader> const &shaders,
-            GLFWwindow *window) { // auto bc I am lazy and I change
-                                  // my mind a lot
-  for (const auto &[RobotPart, part] : rendercontainer) {
-    part.Render(shaders.at(RobotPart));
-  }
-  CheckForErrors("render");
-  glfwSwapBuffers(window);
-  glfwPollEvents();
-}
 
 
 [[deprecated("has some bugs do not use")]] buffer

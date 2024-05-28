@@ -13,10 +13,11 @@
 #include <glm/gtc/type_ptr.hpp>
 // clang-format on 
 
-#include "OBJ_Loader.h"
-#include "shader.h"
 #include <iostream>
 #include <vector>
+
+#include "OBJ_Loader.h"
+#include "shader.h"
 
 inline void CheckForErrors(std::string_view message = "") {
   GLenum error = glGetError();
@@ -64,18 +65,16 @@ inline bindBuffers(const std::vector<objl::Vertex> &vertices,
 }
 
 
-inline std::tuple<GLuint, GLuint, GLuint> load_vxo(std::string_view path,
-                                            std::vector<objl::Vertex> &vertices,
-                                            std::vector<unsigned int> &indices){
+inline std::tuple<GLuint, GLuint, GLuint, std::size_t> load_vxo(std::string_view path){
   objl::Loader Loader;
   if (!Loader.LoadFile(path.data())) {
     std::cerr << "Failed to load OBJ file."<< path.data() << std::endl;
     throw std::runtime_error("Failed to load OBJ file.");
 
   }
-  vertices = Loader.LoadedVertices;
-  indices = Loader.LoadedIndices;
-  return bindBuffers(vertices, indices);
+  auto indices = Loader.LoadedIndices;
+  auto [VAO, VBO, EBO ] = bindBuffers(Loader.LoadedVertices, indices);
+  return {VAO, VBO, EBO, indices.size()};
 }
 
 enum class RobotParts { base, upper_base, middle_arm };
@@ -91,26 +90,24 @@ public:
 class Part {
  bufferWrapper<decltype(glDeleteBuffers)> VBO, EBO;
  bufferWrapper<decltype(glDeleteVertexArrays)> VAO;
-  std::vector<objl::Vertex> vertices{};
-  std::vector<unsigned int> indices{};
+  size_t ebo_size{};
 public:
   Part(std::string_view path) {
-    auto [VAO_, VBO_, EBO_] = load_vxo(path, vertices, indices);
+    auto [VAO_, VBO_, EBO_, Size] = load_vxo(path);
     VAO.buffer = VAO_;
     VBO.buffer = VBO_;
     EBO.buffer = EBO_;
+    ebo_size = Size;
   }
 
-void Render(Shader const & shader) const {
-    shader.use();
+void Render() const {
     glBindVertexArray(VAO.buffer);
     CheckForErrors(std::string("Binding VAO: ") + std::to_string(VAO.buffer));
-    glDrawElements(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT,
+    glDrawElements(GL_TRIANGLE_STRIP, ebo_size, GL_UNSIGNED_INT,
                    0); // traiangle strip Works better ???? why ??
                        // GL_LINES_ADJACENCY also looks cool
                        // GL_LINES also looks cool
     CheckForErrors("Drawing elements");
   }
-
 };
 

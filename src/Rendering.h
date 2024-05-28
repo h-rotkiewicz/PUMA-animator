@@ -14,6 +14,4 @@ bindBuffers(const std::vector<objl::Vertex> &vertices,
 [[deprecated("has some bugs do not use")]] GLuint
 bindTexture(std::string_view texturePath);
 void preRender();
-void render(std::unordered_map<RobotParts, Part> const &rendercontainer, std::unordered_map<RobotParts, Shader> const &ShaderMap,
-            GLFWwindow *window);
 
