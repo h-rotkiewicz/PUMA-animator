@@ -2,8 +2,34 @@
 
 #include <algorithm>
 
+#include "settings.h"
+
+// TODO: Delete later
+std::ostream &operator<<(std::ostream &os, const RobotParts &part) {
+  switch (part) {
+    case RobotParts::base:
+      os << "Base";
+      break;
+    case RobotParts::upper_base:
+      os << "Upper Base";
+      break;
+    case RobotParts::middle_arm:
+      os << "Middle Arm";
+      break;
+    default:
+      os << "Unknown";
+  }
+  return os;
+}
+
+constexpr auto find_in_array(auto const &array, auto const &part_) {
+  for (int i = 0; i < array.size(); i++)
+    if (array[i] == part_) return array.begin() + i;
+  throw std::runtime_error("Part not found in Container");
+}
+
 void ShaderManager::updateShader(const Camera &camera) {
-  auto UpdateShader = [&camera](Shader &S, ModelState &state) {
+  auto UpdateShader = [&camera](Shader &S, ModelState const &state) {
     S.use();
     glm::mat4 view(1.0f);
     glm::mat4 projection(1.0f);
@@ -17,39 +43,47 @@ void ShaderManager::updateShader(const Camera &camera) {
     S.setVec3("lightPos",
               camera.cameraPosition);  // I think it makes sense for max visibility
     S.setVec3("viewPos", camera.cameraPosition);
-
-    glm::mat4 model(1.0f);
-    model = glm::translate(model, state.position);
-    (model = glm::rotate(model, glm::radians(state.angle), state.axis)) == glm::mat4(1.0f) ? state.isRotating = false : state.isRotating = true;
-    S.setMat4("model", model);
+    S.setMat4("model", state.model);
   };
   for (auto &shader : ShaderMap) UpdateShader(shader.second, StateMap.at(shader.first));
 }
 
 void ShaderManager::RotatePart(RobotParts part, float angle) {
-  // Example Rotation
-  StateMap.at(part).angle += angle;
+  constexpr std::array<RobotParts, Settings::RobotSize> PartOrder{RobotParts::base, RobotParts::upper_base, RobotParts::middle_arm};
+
+  auto  CurrentPart        = find_in_array(PartOrder, part);
+  auto &current_part_state = StateMap.find(part)->second;
+
+  for (auto i = CurrentPart; i < PartOrder.end(); i++) {
+    // std::cout << "Rotating: " << *i << " by " << angle << " on axis: " << axis.x << axis.y << axis.z<< std::endl;
+    StateMap.at(*i).angle = angle;
+    StateMap.at(*i).model = glm::rotate(StateMap.at(*i).model, glm::radians(current_part_state.angle), current_part_state.axis);
+  }
 }
 
 std::unordered_map<RobotParts, Shader> const &ShaderManager::getShaderMap() const { return ShaderMap; }
 
-void ShaderManager::addShader(RobotParts part, Shader &&shader, glm::vec3 axis) {
+void ShaderManager::addShader(RobotParts part, Shader &&shader) {
   ShaderMap.emplace(part, std::move(shader));
-  ModelState state{.angle = 0, .axis = axis, .position{0, 0, 0}};
+  ModelState state{.axis = {0, 0, 0}, .position{0, 0, 0}, .angle = 0};
+
+  if (part == RobotParts::base)
+    state.axis = {0, 0, 0};
+  else if (part == RobotParts::upper_base)
+    state.axis = {0, 1, 0};
+  else if (part == RobotParts::middle_arm)
+    state.axis = {0, 0, 1};
+
   StateMap.emplace(part, state);
 }
+/* std::for_each(rendercontainer.find(RobotPart), rendercontainer.end(), [&shaderMap = ShaderMap, &StateMap = StateMap, RobotPart](auto const &Elem) {
+  if (StateMap.at(RobotPart).Rotation.isRotating()) shaderMap.at(RobotPart).use();
+  Elem.second.Render();
+}); */
 void ShaderManager::render(std::unordered_map<RobotParts, Part> const &rendercontainer, GLFWwindow *window) const {
   for (const auto &[RobotPart, part] : rendercontainer) {
-    if (StateMap.at(RobotPart).isRotating) {
-      ShaderMap.at(RobotPart).use();
-      std::for_each(rendercontainer.find(RobotPart), rendercontainer.end(), [&StateMap = StateMap, &RobotPart = RobotPart](auto const &Elem) {
-        Elem.second.Render();
-      });
-      break;
-    } else {
-      ShaderMap.at(RobotPart).use();
-      part.Render();
-    }
+    ShaderMap.at(RobotPart).use();
+    part.Render();
   }
   CheckForErrors("render");
   glfwSwapBuffers(window);
