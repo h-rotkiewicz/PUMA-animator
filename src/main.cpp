@@ -19,9 +19,9 @@ void make_robot(std::unordered_map<RobotParts, Part> &container, ShaderManager &
   AnimationEng.addShader(RobotParts::base, Shader(Paths::shaders_vs.c_str(), Paths::shaders_fs.c_str()));
 
   // WARNING: make sure the initialization of parts is in correct order, otherwise the rotations with be bugged
-  container.emplace(RobotParts::middle_arm, Part(Paths::resources_middle_arm_obj.string()));
-  container.emplace(RobotParts::upper_base, Part(Paths::resources_upper_base_obj.string()));
-  container.emplace(RobotParts::base, Part(Paths::resources_base_obj.string()));
+  container.try_emplace(RobotParts::middle_arm, Part(Paths::resources_middle_arm_obj.string()));
+  container.try_emplace(RobotParts::upper_base, Part(Paths::resources_upper_base_obj.string()));
+  container.try_emplace(RobotParts::base, Part(Paths::resources_base_obj.string()));
 }
 
 void processInput(GLFWwindow *window, Camera &camera, std::unordered_map<RobotParts, Part> &Parts, ShaderManager &AnimationEng) {
@@ -45,9 +45,10 @@ void processInput(GLFWwindow *window, Camera &camera, std::unordered_map<RobotPa
     camera.change_radius(-0.01);
   if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
   {
-    // AnimationEng.RotatePart(RobotParts::upper_base, 1.f, glm::vec3(0.0f, 1.0f, 0.0f));
-    AnimationEng.RotatePart(RobotParts::middle_arm, 1.0f);
+    AnimationEng.RotatePart(RobotParts::upper_base, 1.f);
   }
+  if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+    AnimationEng.RotatePart(RobotParts::middle_arm, 1.f);
 }
 
 int main() {
