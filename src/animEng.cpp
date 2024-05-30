@@ -50,26 +50,33 @@ void ShaderManager::updateShader(const Camera &camera) {
   };
   for (auto const &shader : ShaderMap) UpdateShader(shader.second, StateMap.at(shader.first));
 }
+void rotateModel(glm::mat4& modelMatrix, const glm::vec3& pivotPoint, const glm::quat& rotation) {
+    // Extract the current transformation of the model
+    glm::mat4 currentTransform = modelMatrix;
 
-auto get_rot_from_model(glm::mat4 const &model) {
-  // as per https://stackoverflow.com/questions/17918033/glm-decompose-mat4-into-translation-and-rotation
-  glm::vec3 scale;
-  glm::quat rotation;
-  glm::vec3 translation;
-  glm::vec3 skew;
-  glm::vec4 perspective;
-  glm::decompose(model, scale, rotation, translation, skew, perspective);
-  return glm::conjugate(rotation);
-};
+    // Translate model so pivot point is at the origin
+    glm::mat4 toOrigin = glm::translate(glm::mat4(1.0f), -pivotPoint);
 
+    // Apply the rotation at the origin
+    glm::mat4 rotationMatrix = glm::mat4_cast(rotation);
+
+    // Translate model back to its original position
+    glm::mat4 backToPivot = glm::translate(glm::mat4(1.0f), pivotPoint);
+
+    // Combine transformations: first move to pivot point, then apply rotation, then move back
+    glm::mat4 combinedTransform = backToPivot * rotationMatrix * toOrigin;
+
+    // Apply the combined transformation to the current model matrix
+    modelMatrix = combinedTransform * currentTransform;
+}
+
+// WARNING: PAIN AND SUFFERING AHEAD
 void ShaderManager::RotatePart(RobotParts part, float angle) {
   constexpr std::array<RobotParts, Settings::RobotSize> PartOrder{RobotParts::base, RobotParts::upper_base, RobotParts::middle_arm};
 
   auto      CurrentPart        = find_in_array(PartOrder, part);
   auto     &current_part_state = StateMap.find(part)->second;
   glm::vec3 pivotPoint         = current_part_state.pivotPoint;
-  // WARNING: PAIN AND SUFFERING AHEAD
-
   current_part_state.angle.add_angle(angle);  // angle is saved in model
   for (auto i = CurrentPart; i < PartOrder.end(); i++) {
     auto &part_state = StateMap.at(*i);
@@ -78,15 +85,12 @@ void ShaderManager::RotatePart(RobotParts part, float angle) {
       part_state.model = glm::rotate(part_state.model, glm::radians(current_part_state.angle.get_angle_diff()), current_part_state.axis);
       part_state.model = glm::translate(part_state.model, -pivotPoint);
     } else {
-      auto quatTransform = get_rot_from_model(part_state.model);
-      auto axis          = glm::normalize(quatTransform * glm::vec4(current_part_state.axis, 1.0f));
-      auto newaxis       = glm::vec3(axis.x, axis.y, axis.z);
-      part_state.model   = glm::translate(part_state.model, current_part_state.pivotPoint);
-      part_state.model   = glm::rotate(part_state.model, glm::radians(current_part_state.angle.get_angle_diff()), newaxis);
-      part_state.model   = glm::translate(part_state.model, -current_part_state.pivotPoint);
+      rotateModel(part_state.model, pivotPoint, glm::angleAxis(glm::radians(current_part_state.angle.get_angle_diff()), current_part_state.axis));
+
+
+
     }
   }
-  std::cout << std::endl;
 }
 
 std::unordered_map<RobotParts, Shader> const &ShaderManager::getShaderMap() const { return ShaderMap; }
@@ -95,13 +99,13 @@ void ShaderManager::addShader(RobotParts part, Shader &&shader) {
   ShaderMap.emplace(part, std::move(shader));
   ModelState state{.axis = {0, 0, 0}, .pivotPoint{0, 0, 0}, .angle{}};
 
-  // WARNING: Data from blender do not change. conversion from blender to .obj (x,y,z) -> (x,z, y) ?? idk why
+  // WARNING: Data from blender do not change. conversion from blender to .obj (x,y,z) -> (x,z,y) ?? idk why
   if (part == RobotParts::base) {
     state.axis       = {0, 0, 0};
     state.pivotPoint = {0, 0, 0};
   } else if (part == RobotParts::upper_base) {
     state.axis       = {0, 1, 0};
-    state.pivotPoint = {-0.025393, 0.402903, 0};
+    state.pivotPoint = {-0.0003, 0, 0.104};
   } else if (part == RobotParts::middle_arm) {
     state.axis       = {0, 0, 1};
     state.pivotPoint = {-0.008803, 0.757991, 0.353817};
