@@ -14,10 +14,10 @@
 // clang-format on 
 
 #include <iostream>
+#include <utility>
 #include <vector>
 
 #include "OBJ_Loader.h"
-#include "shader.h"
 
 inline void CheckForErrors(std::string_view message = "") {
   GLenum error = glGetError();
@@ -26,6 +26,7 @@ inline void CheckForErrors(std::string_view message = "") {
   }
 }
 
+enum class RobotParts { base, upper_base, middle_arm };
 
 std::tuple<GLuint,GLuint,GLuint>
 inline bindBuffers(const std::vector<objl::Vertex> &vertices,
@@ -77,37 +78,51 @@ inline std::tuple<GLuint, GLuint, GLuint, std::size_t> load_vxo(std::string_view
   return {VAO, VBO, EBO, indices.size()};
 }
 
-enum class RobotParts { base, upper_base, middle_arm };
 
-template <typename Destructor> class bufferWrapper {
-public:
-  ~bufferWrapper(){};
-
-  GLuint buffer{};
-};
 
 
 class Part {
- bufferWrapper<decltype(glDeleteBuffers)> VBO, EBO;
- bufferWrapper<decltype(glDeleteVertexArrays)> VAO;
+ // bufferWrapper<decltype(glDeleteBuffers)> VBO, EBO;
+ // bufferWrapper<decltype(glDeleteVertexArrays)> VAO;
+GLuint VBO{}, VAO{}, EBO{};
   size_t ebo_size{};
 public:
-  Part(std::string_view path) {
+  Part(const Part&) = delete;
+  Part &operator=(const Part&) = delete;
+  Part(Part&& other) {
+    VAO = std::exchange(other.VAO, 0);
+    VBO = std::exchange(other.VBO, 0);
+    EBO = std::exchange(other.EBO, 0);
+    ebo_size = std::exchange(other.ebo_size, 0);
+  }
+  Part &operator=(Part&& other) {
+    VAO = std::exchange(other.VAO, 0);
+    VBO = std::exchange(other.VBO, 0);
+    EBO = std::exchange(other.EBO, 0);
+    ebo_size = std::exchange(other.ebo_size, 0);
+    return *this;
+  }
+Part(std::string_view path) {
     auto [VAO_, VBO_, EBO_, Size] = load_vxo(path);
-    VAO.buffer = VAO_;
-    VBO.buffer = VBO_;
-    EBO.buffer = EBO_;
+    VAO = VAO_;
+    VBO = VBO_;
+    EBO = EBO_;
     ebo_size = Size;
   }
 
 void Render() const {
-    glBindVertexArray(VAO.buffer);
-    CheckForErrors(std::string("Binding VAO: ") + std::to_string(VAO.buffer));
+    glBindVertexArray(VAO);
+    CheckForErrors(std::string("Binding VAO: ") + std::to_string(VAO));
     glDrawElements(GL_TRIANGLE_STRIP, ebo_size, GL_UNSIGNED_INT,
                    0); // traiangle strip Works better ???? why ??
                        // GL_LINES_ADJACENCY also looks cool
                        // GL_LINES also looks cool
     CheckForErrors("Drawing elements");
+  }
+  ~Part() {
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);
   }
 };
 

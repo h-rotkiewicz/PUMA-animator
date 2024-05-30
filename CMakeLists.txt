@@ -1,4 +1,5 @@
 # see https://alexreinking.com/blog/how-to-use-cmake-without-the-agonizing-pain-part-1.html
+set(CMAKE_BUILD_TYPE Debug)
 include(ExternalProject)
 cmake_minimum_required(VERSION 3.29)
 set(CMAKE_CXX_STANDARD 20)
@@ -13,14 +14,6 @@ set( GLAD_GL "" )
 add_compile_definitions(SHADERS_DIR="${CMAKE_SOURCE_DIR}/src/shaders")
 add_compile_definitions(RESOURCES_DIR="${CMAKE_SOURCE_DIR}/src/resources")
 
-# # option( USE-GLFW-GLAD "Use GLAD from GLFW" ON )
-#
-# if(USE-GLFW-GLAD)
-#   include_directories("${GLFW_SOURCE_DIR}/deps")
-#   set( GLAD_GL "${GLFW_SOURCE_DIR}/deps/glad/gl.h" )
-# endif()
-#
-
 
 if( MSVC )
     SET( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ENTRY:mainCRTStartup" )
@@ -28,12 +21,6 @@ endif()
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/includes/glfw)
 add_subdirectory(${CMAKE_SOURCE_DIR}/includes/glm)
-
-if(CMAKE_BUILD_TYPE STREQUAL "DEBUG")
-  find_package(Catch2 3 REQUIRED)
-  add_subdirectory(Tests)
-endif()
-
 
 
 file(GLOB SOURCES "src/*.cpp" "src/*.c")

@@ -1,7 +1,9 @@
 #pragma once
-#include "ModelParams.h"
+#include "camera.h"
 #include "common.h"
+#include "shader.h"
 
+//Helper struct, for doing reverse kinematics
 struct Angle {
  private:
   float old_angle{};

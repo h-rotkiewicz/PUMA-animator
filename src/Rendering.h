@@ -1,5 +1,5 @@
 #pragma once
-#include "ModelParams.h"
+#include "camera.h"
 #include "common.h"
 #include "shader.h"
 #include <unordered_map>

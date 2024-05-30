@@ -1,10 +1,5 @@
 #include "animEng.h"
 
-#include <algorithm>
-
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/matrix_decompose.hpp>
-
 #include "settings.h"
 
 // TODO: Delete later
@@ -51,22 +46,11 @@ void ShaderManager::updateShader(const Camera &camera) {
   for (auto const &shader : ShaderMap) UpdateShader(shader.second, StateMap.at(shader.first));
 }
 void rotateModel(glm::mat4& modelMatrix, const glm::vec3& pivotPoint, const glm::quat& rotation) {
-    // Extract the current transformation of the model
     glm::mat4 currentTransform = modelMatrix;
-
-    // Translate model so pivot point is at the origin
     glm::mat4 toOrigin = glm::translate(glm::mat4(1.0f), -pivotPoint);
-
-    // Apply the rotation at the origin
     glm::mat4 rotationMatrix = glm::mat4_cast(rotation);
-
-    // Translate model back to its original position
     glm::mat4 backToPivot = glm::translate(glm::mat4(1.0f), pivotPoint);
-
-    // Combine transformations: first move to pivot point, then apply rotation, then move back
     glm::mat4 combinedTransform = backToPivot * rotationMatrix * toOrigin;
-
-    // Apply the combined transformation to the current model matrix
     modelMatrix = combinedTransform * currentTransform;
 }
 
@@ -86,9 +70,6 @@ void ShaderManager::RotatePart(RobotParts part, float angle) {
       part_state.model = glm::translate(part_state.model, -pivotPoint);
     } else {
       rotateModel(part_state.model, pivotPoint, glm::angleAxis(glm::radians(current_part_state.angle.get_angle_diff()), current_part_state.axis));
-
-
-
     }
   }
 }
