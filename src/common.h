@@ -22,7 +22,7 @@ inline void CheckForErrors(std::string_view message = "") {
   }
 }
 
-enum class RobotParts { base, upper_base, middle_arm };
+enum class RobotParts { base, upper_base, middle_arm, joint, forearm, hand };
 
 std::tuple<GLuint,GLuint,GLuint>
 inline bindBuffers(const std::vector<objl::Vertex> &vertices,

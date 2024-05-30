@@ -45,18 +45,18 @@ void ShaderManager::updateShader(const Camera &camera) {
   };
   for (auto const &shader : ShaderMap) UpdateShader(shader.second, StateMap.at(shader.first));
 }
-void rotateModel(glm::mat4& modelMatrix, const glm::vec3& pivotPoint, const glm::quat& rotation) {
-    glm::mat4 currentTransform = modelMatrix;
-    glm::mat4 toOrigin = glm::translate(glm::mat4(1.0f), -pivotPoint);
-    glm::mat4 rotationMatrix = glm::mat4_cast(rotation);
-    glm::mat4 backToPivot = glm::translate(glm::mat4(1.0f), pivotPoint);
-    glm::mat4 combinedTransform = backToPivot * rotationMatrix * toOrigin;
-    modelMatrix = combinedTransform * currentTransform;
+void rotateModel(glm::mat4 &modelMatrix, const glm::vec3 &pivotPoint, const glm::quat &rotation) {
+  glm::mat4 currentTransform  = modelMatrix;
+  glm::mat4 toOrigin          = glm::translate(glm::mat4(1.0f), -pivotPoint);
+  glm::mat4 rotationMatrix    = glm::mat4_cast(rotation);
+  glm::mat4 backToPivot       = glm::translate(glm::mat4(1.0f), pivotPoint);
+  glm::mat4 combinedTransform = backToPivot * rotationMatrix * toOrigin;
+  modelMatrix                 = combinedTransform * currentTransform;
 }
 
 // WARNING: PAIN AND SUFFERING AHEAD
 void ShaderManager::RotatePart(RobotParts part, float angle) {
-  constexpr std::array<RobotParts, Settings::RobotSize> PartOrder{RobotParts::base, RobotParts::upper_base, RobotParts::middle_arm};
+  constexpr std::array<RobotParts, Settings::RobotSize> PartOrder{RobotParts::base, RobotParts::upper_base, RobotParts::middle_arm, RobotParts::joint, RobotParts::forearm, RobotParts::hand};
 
   auto      CurrentPart        = find_in_array(PartOrder, part);
   auto     &current_part_state = StateMap.find(part)->second;
@@ -90,6 +90,15 @@ void ShaderManager::addShader(RobotParts part, Shader &&shader) {
   } else if (part == RobotParts::middle_arm) {
     state.axis       = {0, 0, 1};
     state.pivotPoint = {-0.008803, 0.757991, 0.353817};
+  } else if (part == RobotParts::forearm) {
+    state.axis       = {0, 1, 0};
+    state.pivotPoint = {-0.325275, 0.03361, 0.82457};
+  } else if (part == RobotParts::joint) {
+    state.axis       = {1, 0, 0};
+    state.pivotPoint = {0.024255, 0.14293, 1.62133};
+  } else if (part == RobotParts::hand) {
+    state.axis       = {0, 1, 0};
+    state.pivotPoint = {0.024255,0.040911 ,0.872556 };
   }
 
   StateMap.try_emplace(part, state);

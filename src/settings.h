@@ -5,5 +5,5 @@ struct Settings {
   constexpr static unsigned int SCR_WIDTH = 800;
   constexpr static unsigned int SCR_HEIGHT = 600;
   constexpr static glm::vec3 lightColor{ 1.f, 1.f, 1.f };
-  constexpr static size_t RobotSize = 3;
+  constexpr static size_t RobotSize = 6;
 };
