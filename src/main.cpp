@@ -12,16 +12,16 @@
 #include "paths.h"
 
 void make_robot(std::unordered_map<RobotParts, Part> &container, ShaderManager &AnimationEng) {
-  Part part(Paths::resources_base_obj.string());
+  Part part(Paths::resources_base_obj);
 
-  AnimationEng.addShader(RobotParts::middle_arm, Shader(Paths::shaders_vs.c_str(), Paths::shaders_fs.c_str()));
-  AnimationEng.addShader(RobotParts::upper_base, Shader(Paths::shaders_vs.c_str(), Paths::shaders_fs.c_str()));
-  AnimationEng.addShader(RobotParts::base, Shader(Paths::shaders_vs.c_str(), Paths::shaders_fs.c_str()));
+  AnimationEng.addShader(RobotParts::middle_arm, Shader(Paths::shaders_vs, Paths::shaders_fs));
+  AnimationEng.addShader(RobotParts::upper_base, Shader(Paths::shaders_vs, Paths::shaders_fs));
+  AnimationEng.addShader(RobotParts::base, Shader(Paths::shaders_vs, Paths::shaders_fs));
 
   // WARNING: make sure the initialization of parts is in correct order, otherwise the rotations with be bugged
-  container.try_emplace(RobotParts::middle_arm, Part(Paths::resources_middle_arm_obj.string()));
-  container.try_emplace(RobotParts::upper_base, Part(Paths::resources_upper_base_obj.string()));
-  container.try_emplace(RobotParts::base, Part(Paths::resources_base_obj.string()));
+  container.try_emplace(RobotParts::middle_arm, Part(Paths::resources_middle_arm_obj));
+  container.try_emplace(RobotParts::upper_base, Part(Paths::resources_upper_base_obj));
+  container.try_emplace(RobotParts::base, Part(Paths::resources_base_obj));
 }
 
 void processInput(GLFWwindow *window, Camera &camera, std::unordered_map<RobotParts, Part> &Parts, ShaderManager &AnimationEng) {
@@ -43,7 +43,7 @@ int main() {
     int           Radius = 3;
     GLFWwindow   *window = init();
     Camera        camera(Radius, 0, {0.0f, 0.0f, 0.0f});
-    Shader        shader(Paths::shaders_vs.c_str(), Paths::shaders_fs.c_str());
+    Shader        shader(Paths::shaders_vs, Paths::shaders_fs);
     ShaderManager AnimationEng;
 
     std::unordered_map<RobotParts, Part> Parts;

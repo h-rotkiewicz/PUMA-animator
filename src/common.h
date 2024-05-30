@@ -1,7 +1,3 @@
-/* Why does this file exist ? well because  clang-format gets a stroke if I
- * include clang-format off and clang-format on in the main file and refuses to
- * format the code properly. So I put all the includes in this file and include
- * this file  */
 #pragma once
 
 // clang-format off
@@ -82,8 +78,6 @@ inline std::tuple<GLuint, GLuint, GLuint, std::size_t> load_vxo(std::string_view
 
 
 class Part {
- // bufferWrapper<decltype(glDeleteBuffers)> VBO, EBO;
- // bufferWrapper<decltype(glDeleteVertexArrays)> VAO;
 GLuint VBO{}, VAO{}, EBO{};
   size_t ebo_size{};
 public:
