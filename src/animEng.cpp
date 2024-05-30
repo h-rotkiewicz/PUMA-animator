@@ -1,5 +1,7 @@
 #include "animEng.h"
 
+#include <future>
+
 #include "settings.h"
 
 // TODO: Delete later
@@ -26,8 +28,8 @@ constexpr auto find_in_array(auto const &array, auto const &part_) {
   throw std::runtime_error("Part not found in Container");
 }
 
-void ShaderManager::updateShader(const Camera &camera) {
-  auto UpdateShader = [&camera](Shader const &S, ModelState const &state) {
+void ShaderManager::updateShader(const Camera &camera, GLFWwindow *window) {
+  auto UpdateShader = [&, this](Shader const &S, ModelState const &state) {
     S.use();
     glm::mat4 view(1.0f);
     glm::mat4 projection(1.0f);
@@ -42,8 +44,13 @@ void ShaderManager::updateShader(const Camera &camera) {
               camera.cameraPosition);  // I think it makes sense for max visibility
     S.setVec3("viewPos", camera.cameraPosition);
     S.setMat4("model", state.model);
+    renderPoint(state.pivotPoint, glm::vec3(0, 0, 0), glm::mat4(1.0f), view, projection, window);
   };
-  for (auto const &shader : ShaderMap) UpdateShader(shader.second, StateMap.at(shader.first));
+  for (auto const &shader : ShaderMap) {
+    UpdateShader(shader.second, StateMap.at(shader.first));
+    glfwSwapBuffers(window);
+    glfwPollEvents();
+  }
 }
 void rotateModel(glm::mat4 &modelMatrix, const glm::vec3 &pivotPoint, const glm::quat &rotation) {
   glm::mat4 currentTransform  = modelMatrix;
@@ -90,20 +97,26 @@ void ShaderManager::addShader(RobotParts part, Shader &&shader) {
   } else if (part == RobotParts::middle_arm) {
     state.axis       = {0, 0, 1};
     state.pivotPoint = {-0.008803, 0.757991, 0.353817};
-  } else if (part == RobotParts::forearm) {
-    state.axis       = {0, 1, 0};
-    state.pivotPoint = {-0.325275, 0.03361, 0.82457};
   } else if (part == RobotParts::joint) {
-    state.axis       = {1, 0, 0};
-    state.pivotPoint = {0.024255, 0.14293, 1.62133};
+    state.axis       = {0, 0, 1};
+    state.pivotPoint = {-0.013255, 1.57, 0.253817};
+  } else if (part == RobotParts::forearm) {
+    state.axis       = glm::normalize(glm::vec3(0.32, 0.68, 0));
+    state.pivotPoint = {-0.13, 1.326, 0.03};
   } else if (part == RobotParts::hand) {
-    state.axis       = {0, 1, 0};
-    state.pivotPoint = {0.024255,0.040911 ,0.872556 };
+    state.axis       = glm::normalize(glm::vec3(0.32, 0.68, 0));
+    state.pivotPoint = {-0.36, 0.880496, 0.058};
   }
-
   StateMap.try_emplace(part, state);
 }
-void ShaderManager::render(std::unordered_map<RobotParts, Part> const &rendercontainer, GLFWwindow *window) const {
+
+static float getAnswer() {
+  float answer;
+  std::cin >> answer;
+  return answer;
+}
+
+void ShaderManager::render(std::unordered_map<RobotParts, Part> const &rendercontainer, GLFWwindow *window) {
   for (const auto &[RobotPart, part] : rendercontainer) {
     ShaderMap.at(RobotPart).use();
     part.Render();

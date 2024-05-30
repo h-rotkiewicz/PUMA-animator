@@ -11,9 +11,7 @@
 #include "defines.h"
 #include "paths.h"
 
-
 void make_robot(std::unordered_map<RobotParts, Part> &container, ShaderManager &AnimationEng) {
-
   auto make_part = [&container, &AnimationEng](RobotParts part, const char *path) {
     container.try_emplace(part, Part(path));
     AnimationEng.addShader(part, Shader(Paths::shaders_vs, Paths::shaders_fs));
@@ -59,8 +57,9 @@ int main() {
     while (!glfwWindowShouldClose(window)) {
       preRender();
       processInput(window, camera, Parts, AnimationEng);
-      AnimationEng.updateShader(camera);
+      AnimationEng.updateShader(camera,window);
       AnimationEng.render(Parts, window);
+
       CheckForErrors("Something went wrong ");
     }
   }

@@ -20,5 +20,7 @@ struct Paths {
   static constexpr const char* resources_joint       = FILEPATH(RESOURCES_DIR, "joint.obj");
   static constexpr const char* resources_Forearm       = FILEPATH(RESOURCES_DIR, "Forearm.obj");
   static constexpr const char* resources_hand       = FILEPATH(RESOURCES_DIR, "hand.obj");
+  static constexpr const char* shaders_fs_debug = FILEPATH(RESOURCES_DIR, "shaders_debug.fs");
+  static constexpr const char* shaders_vs_debug = FILEPATH(RESOURCES_DIR, "shaders_debug.vs");
 
 };
