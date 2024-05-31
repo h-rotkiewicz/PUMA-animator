@@ -3,7 +3,6 @@ set(CMAKE_BUILD_TYPE Debug)
 include(ExternalProject)
 cmake_minimum_required(VERSION 3.29)
 set(CMAKE_CXX_STANDARD 20)
-option(WIN32 "Windows build" OFF)
 project(PUMA)
 
 find_package( OpenGL REQUIRED )
