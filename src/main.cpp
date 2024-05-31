@@ -59,7 +59,6 @@ int main() {
       processInput(window, camera, Parts, AnimationEng);
       AnimationEng.updateShader(camera,window);
       AnimationEng.render(Parts, window);
-
       CheckForErrors("Something went wrong ");
     }
   }

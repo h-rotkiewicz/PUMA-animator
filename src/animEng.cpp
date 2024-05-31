@@ -16,6 +16,15 @@ std::ostream &operator<<(std::ostream &os, const RobotParts &part) {
     case RobotParts::middle_arm:
       os << "Middle Arm";
       break;
+    case RobotParts::joint:
+      os << "Joint";
+      break;
+    case RobotParts::forearm:
+      os << "Forearm";
+      break;
+    case RobotParts::hand:
+      os << "Hand";
+      break;
     default:
       os << "Unknown";
   }
@@ -34,8 +43,7 @@ void ShaderManager::updateShader(const Camera &camera, GLFWwindow *window) {
     glm::mat4 view(1.0f);
     glm::mat4 projection(1.0f);
     projection = glm::perspective(glm::radians(45.0f), (float)Settings::SCR_WIDTH / (float)Settings::SCR_HEIGHT, 0.1f, 100.0f);
-    // view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-    view = glm::lookAt(camera.cameraPosition, camera.getCameraTarget(), camera.getCameraUp());
+    view       = glm::lookAt(camera.cameraPosition, camera.getCameraTarget(), camera.getCameraUp());
 
     S.setMat4("projection", projection);
     S.setMat4("view", view);
@@ -44,39 +52,34 @@ void ShaderManager::updateShader(const Camera &camera, GLFWwindow *window) {
               camera.cameraPosition);  // I think it makes sense for max visibility
     S.setVec3("viewPos", camera.cameraPosition);
     S.setMat4("model", state.model);
-    renderPoint(state.pivotPoint, glm::vec3(0, 0, 0), glm::mat4(1.0f), view, projection, window);
   };
   for (auto const &shader : ShaderMap) {
     UpdateShader(shader.second, StateMap.at(shader.first));
-    glfwSwapBuffers(window);
-    glfwPollEvents();
   }
-}
-void rotateModel(glm::mat4 &modelMatrix, const glm::vec3 &pivotPoint, const glm::quat &rotation) {
-  glm::mat4 currentTransform  = modelMatrix;
-  glm::mat4 toOrigin          = glm::translate(glm::mat4(1.0f), -pivotPoint);
-  glm::mat4 rotationMatrix    = glm::mat4_cast(rotation);
-  glm::mat4 backToPivot       = glm::translate(glm::mat4(1.0f), pivotPoint);
-  glm::mat4 combinedTransform = backToPivot * rotationMatrix * toOrigin;
-  modelMatrix                 = combinedTransform * currentTransform;
 }
 
 // WARNING: PAIN AND SUFFERING AHEAD
 void ShaderManager::RotatePart(RobotParts part, float angle) {
   constexpr std::array<RobotParts, Settings::RobotSize> PartOrder{RobotParts::base, RobotParts::upper_base, RobotParts::middle_arm, RobotParts::joint, RobotParts::forearm, RobotParts::hand};
 
-  auto      CurrentPart        = find_in_array(PartOrder, part);
-  auto     &current_part_state = StateMap.find(part)->second;
-  glm::vec3 pivotPoint         = current_part_state.pivotPoint;
-  current_part_state.angle.add_angle(angle);  // angle is saved in model
-  for (auto i = CurrentPart; i < PartOrder.end(); i++) {
+  auto       CalledPartPtr          = find_in_array(PartOrder, part);
+  auto      &Called_part_state      = StateMap.find(part)->second;
+  glm::vec3 &Called_part_pivotPoint = Called_part_state.pivotPoint;
+  Called_part_state.angle.add_angle(angle);
+  for (auto i = CalledPartPtr; i < PartOrder.end(); i++) {
     auto &part_state = StateMap.at(*i);
-    if (*CurrentPart == *i) {
-      part_state.model = glm::translate(part_state.model, pivotPoint);
-      part_state.model = glm::rotate(part_state.model, glm::radians(current_part_state.angle.get_angle_diff()), current_part_state.axis);
-      part_state.model = glm::translate(part_state.model, -pivotPoint);
+    if (*CalledPartPtr == *i) {
+      part_state.model = glm::translate(part_state.model, Called_part_pivotPoint);
+      part_state.model = glm::rotate(part_state.model, glm::radians(Called_part_state.angle.get_angle_diff()), Called_part_state.axis);
+      part_state.model = glm::translate(part_state.model, -Called_part_pivotPoint);
     } else {
-      rotateModel(part_state.model, pivotPoint, glm::angleAxis(glm::radians(current_part_state.angle.get_angle_diff()), current_part_state.axis));
+      glm::qua  rotation      = glm::angleAxis(glm::radians(Called_part_state.angle.get_angle_diff()), Called_part_state.axis);
+      glm::mat4 rotation_mat4 = glm::mat4_cast(rotation);
+      glm::mat4 backToPivot   = glm::translate(glm::mat4(1.0f), Called_part_pivotPoint);
+      glm::mat4 toOrigin      = glm::translate(glm::mat4(1.0f), -Called_part_pivotPoint);
+      glm::mat4 combinedTransform = backToPivot * rotation_mat4 * toOrigin;
+      part_state.model            = combinedTransform * part_state.model;
+      // part_state.axis             = combinedTransform * glm::vec4(part_state.axis, 1);
     }
   }
 }
@@ -93,13 +96,13 @@ void ShaderManager::addShader(RobotParts part, Shader &&shader) {
     state.pivotPoint = {0, 0, 0};
   } else if (part == RobotParts::upper_base) {
     state.axis       = {0, 1, 0};
-    state.pivotPoint = {-0.0003, 0, 0.104};
+    state.pivotPoint = {-0.0003, 0.47991, 0.104};
   } else if (part == RobotParts::middle_arm) {
     state.axis       = {0, 0, 1};
-    state.pivotPoint = {-0.008803, 0.757991, 0.353817};
+    state.pivotPoint = {0.008803, 0.757991, -0.103817};
   } else if (part == RobotParts::joint) {
     state.axis       = {0, 0, 1};
-    state.pivotPoint = {-0.013255, 1.57, 0.253817};
+    state.pivotPoint = {-0.003255, 1.57, -0.103817};
   } else if (part == RobotParts::forearm) {
     state.axis       = glm::normalize(glm::vec3(0.32, 0.68, 0));
     state.pivotPoint = {-0.13, 1.326, 0.03};
