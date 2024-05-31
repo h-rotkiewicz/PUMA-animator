@@ -2,7 +2,7 @@
 #include <unordered_map>
 
 #include "camera.h"
-#define DEBUG
+#define Debug
 #include <cmath>
 
 #include "Rendering.h"
@@ -11,7 +11,7 @@
 #include "defines.h"
 #include "paths.h"
 
-void make_robot(std::unordered_map<RobotParts, Part> &container, ShaderManager &AnimationEng) {
+void make_robot(std::unordered_map<RobotParts, Part> &container, PartManager &AnimationEng) {
   auto make_part = [&container, &AnimationEng](RobotParts part, const char *path) {
     container.try_emplace(part, Part(path));
     AnimationEng.addShader(part, Shader(Paths::shaders_vs, Paths::shaders_fs));
@@ -26,7 +26,7 @@ void make_robot(std::unordered_map<RobotParts, Part> &container, ShaderManager &
   make_part(RobotParts::base, Paths::resources_base_obj);
 }
 
-void processInput(GLFWwindow *window, Camera &camera, std::unordered_map<RobotParts, Part> &Parts, ShaderManager &AnimationEng) {
+void processInput(GLFWwindow *window, Camera &camera, std::unordered_map<RobotParts, Part> &Parts, PartManager &AnimationEng) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) glfwSetWindowShouldClose(window, true);
   if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) camera.Orbit(1.f, glm::vec3(1.0f, 0.0f, 0.0f));
   if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) camera.Orbit(-1.f, glm::vec3(1.0f, 0.0f, 0.0f));
@@ -45,20 +45,24 @@ void processInput(GLFWwindow *window, Camera &camera, std::unordered_map<RobotPa
 
 int main() {
   {
-    int           Radius = 3;
-    GLFWwindow   *window = init();
-    Camera        camera(Radius, 0, {0.0f, 0.0f, 0.0f});
-    Shader        shader(Paths::shaders_vs, Paths::shaders_fs);
-    ShaderManager AnimationEng;
+    int         Radius = 3;
+    GLFWwindow *window = init();
+    Camera      camera(Radius, 0, {0.0f, 0.0f, 0.0f});
+    Shader      shader(Paths::shaders_vs, Paths::shaders_fs);
+    PartManager partManger;
 
     std::unordered_map<RobotParts, Part> Parts;
-    make_robot(Parts, AnimationEng);
+    make_robot(Parts, partManger);
 
     while (!glfwWindowShouldClose(window)) {
       preRender();
-      processInput(window, camera, Parts, AnimationEng);
-      AnimationEng.updateShader(camera,window);
-      AnimationEng.render(Parts, window);
+      processInput(window, camera, Parts, partManger);
+      partManger.updateShaders(camera, window);
+#ifdef Debug
+      partManger.render_debug(Parts, window);
+#else
+      partManger.render(Parts, window);
+#endif
       CheckForErrors("Something went wrong ");
     }
   }

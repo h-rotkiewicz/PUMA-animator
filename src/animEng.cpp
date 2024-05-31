@@ -37,8 +37,8 @@ constexpr auto find_in_array(auto const &array, auto const &part_) {
   throw std::runtime_error("Part not found in Container");
 }
 
-void ShaderManager::updateShader(const Camera &camera, GLFWwindow *window) {
-  auto UpdateShader = [&, this](Shader const &S, ModelState const &state) {
+void PartManager::updateShaders(const Camera &camera, GLFWwindow *window) {
+  auto UpdateShader = [&](Shader const &S, ModelState &state) {
     S.use();
     glm::mat4 view(1.0f);
     glm::mat4 projection(1.0f);
@@ -52,14 +52,14 @@ void ShaderManager::updateShader(const Camera &camera, GLFWwindow *window) {
               camera.cameraPosition);  // I think it makes sense for max visibility
     S.setVec3("viewPos", camera.cameraPosition);
     S.setMat4("model", state.model);
+    state.projection = projection;
+    state.view       = view;
   };
-  for (auto const &shader : ShaderMap) {
-    UpdateShader(shader.second, StateMap.at(shader.first));
-  }
+  for (auto const &shader : ShaderMap) UpdateShader(shader.second, StateMap.at(shader.first));
 }
 
 // WARNING: PAIN AND SUFFERING AHEAD
-void ShaderManager::RotatePart(RobotParts part, float angle) {
+void PartManager::RotatePart(RobotParts part, float angle) {
   constexpr std::array<RobotParts, Settings::RobotSize> PartOrder{RobotParts::base, RobotParts::upper_base, RobotParts::middle_arm, RobotParts::joint, RobotParts::forearm, RobotParts::hand};
 
   auto       CalledPartPtr          = find_in_array(PartOrder, part);
@@ -73,10 +73,10 @@ void ShaderManager::RotatePart(RobotParts part, float angle) {
       part_state.model = glm::rotate(part_state.model, glm::radians(Called_part_state.angle.get_angle_diff()), Called_part_state.axis);
       part_state.model = glm::translate(part_state.model, -Called_part_pivotPoint);
     } else {
-      glm::qua  rotation      = glm::angleAxis(glm::radians(Called_part_state.angle.get_angle_diff()), Called_part_state.axis);
-      glm::mat4 rotation_mat4 = glm::mat4_cast(rotation);
-      glm::mat4 backToPivot   = glm::translate(glm::mat4(1.0f), Called_part_pivotPoint);
-      glm::mat4 toOrigin      = glm::translate(glm::mat4(1.0f), -Called_part_pivotPoint);
+      glm::qua  rotation          = glm::angleAxis(glm::radians(Called_part_state.angle.get_angle_diff()), Called_part_state.axis);
+      glm::mat4 rotation_mat4     = glm::mat4_cast(rotation);
+      glm::mat4 backToPivot       = glm::translate(glm::mat4(1.0f), Called_part_pivotPoint);
+      glm::mat4 toOrigin          = glm::translate(glm::mat4(1.0f), -Called_part_pivotPoint);
       glm::mat4 combinedTransform = backToPivot * rotation_mat4 * toOrigin;
       part_state.model            = combinedTransform * part_state.model;
       // part_state.axis             = combinedTransform * glm::vec4(part_state.axis, 1);
@@ -84,9 +84,9 @@ void ShaderManager::RotatePart(RobotParts part, float angle) {
   }
 }
 
-std::unordered_map<RobotParts, Shader> const &ShaderManager::getShaderMap() const { return ShaderMap; }
+std::unordered_map<RobotParts, Shader> const &PartManager::getShaderMap() const { return ShaderMap; }
 
-void ShaderManager::addShader(RobotParts part, Shader &&shader) {
+void PartManager::addShader(RobotParts part, Shader &&shader) {
   ShaderMap.emplace(part, std::move(shader));
   ModelState state{.axis = {0, 0, 0}, .pivotPoint{0, 0, 0}, .angle{}};
 
@@ -119,7 +119,124 @@ static float getAnswer() {
   return answer;
 }
 
-void ShaderManager::render(std::unordered_map<RobotParts, Part> const &rendercontainer, GLFWwindow *window) {
+void renderPoint(glm::vec3 pivotPoint) {
+  GLuint VAO, VBO;
+
+  glGenVertexArrays(1, &VAO);
+  glGenBuffers(1, &VBO);
+
+  glBindVertexArray(VAO);
+
+  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3), &pivotPoint, GL_STATIC_DRAW);
+
+  // Bind vertex attribute - assuming the position attribute location is 0
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+  glEnableVertexAttribArray(0);
+
+  // Draw the point
+  glPointSize(20.0f);  // Set the point size if necessary
+  glDrawArrays(GL_POINTS, 0, 1);
+
+  // Unbind and cleanup
+  glDisableVertexAttribArray(0);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindVertexArray(0);
+
+  glDeleteBuffers(1, &VBO);
+  glDeleteVertexArrays(1, &VAO);
+}
+void renderAxisLines(const glm::vec3& pivotPoint, const glm::vec3 axis[3]) {
+  GLuint VAO, VBO;
+
+  glGenVertexArrays(1, &VAO);
+  glGenBuffers(1, &VBO);
+
+  glBindVertexArray(VAO);
+
+  // Create the vertex buffer data including pivot point and axis endpoints
+  glm::vec3 vertices[6];
+  vertices[0] = pivotPoint;
+  vertices[1] = pivotPoint + axis[0];  // X axis
+  vertices[2] = pivotPoint;
+  vertices[3] = pivotPoint + axis[1];  // Y axis
+  vertices[4] = pivotPoint;
+  vertices[5] = pivotPoint + axis[2];  // Z axis
+
+  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+  // Vertex positions
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+
+  // Draw the lines
+  glDrawArrays(GL_LINES, 0, 6);
+
+  // Unbind and cleanup
+  glDisableVertexAttribArray(0);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindVertexArray(0);
+
+  glDeleteBuffers(1, &VBO);
+  glDeleteVertexArrays(1, &VAO);
+}
+
+void renderLine(const glm::vec3& pivotPoint, glm::vec3 axis) {
+  GLuint VAO, VBO;
+
+  glGenVertexArrays(1, &VAO);
+  glGenBuffers(1, &VBO);
+
+  glBindVertexArray(VAO);
+
+  // Create the vertex buffer data including pivot point and axis endpoint
+  glm::vec3 vertices[2];
+  vertices[0] = pivotPoint;
+  vertices[1] = pivotPoint + axis*100.f;  // Axis endpoint
+
+  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+  // Vertex positions
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+
+  // Draw the line
+  glDrawArrays(GL_LINES, 0, 2);
+
+  // Unbind and cleanup
+  glDisableVertexAttribArray(0);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindVertexArray(0);
+
+  glDeleteBuffers(1, &VBO);
+  glDeleteVertexArrays(1, &VAO);
+}
+void PartManager::render_debug(std::unordered_map<RobotParts, Part> const &rendercontainer, GLFWwindow *window) const{
+  for (const auto &[RobotPart, part] : rendercontainer) {
+    ShaderMap.at(RobotPart).use();
+    part.Render();
+  }
+  CheckForErrors("render");
+  DebugShader.use();
+  for (auto const &[part, state] : StateMap) {
+    DebugShader.setMat4("model", state.model);
+    DebugShader.setMat4("view", state.view);
+    DebugShader.setMat4("projection", state.projection);
+    DebugShader.setVec3("color", {1,0,0}); //Red for PivotPoints
+    renderPoint(state.pivotPoint);
+    DebugShader.setVec3("color", {0,1,0}); //Green for AxisPoints
+    renderPoint(state.axis+state.pivotPoint);
+    DebugShader.setVec3("color", {0,0,1}); //blue for AxisLines
+    renderLine(state.pivotPoint, state.axis);
+  }
+  CheckForErrors("Debugrender");
+  glfwSwapBuffers(window);
+  glfwPollEvents();
+}
+
+void PartManager::render(std::unordered_map<RobotParts, Part> const &rendercontainer, GLFWwindow *window) const {
   for (const auto &[RobotPart, part] : rendercontainer) {
     ShaderMap.at(RobotPart).use();
     part.Render();
