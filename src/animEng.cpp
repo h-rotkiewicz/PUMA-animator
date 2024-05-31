@@ -71,18 +71,14 @@ void PartManager::RotatePart(RobotParts part, float angle) {
   Called_part_state.angle.add_angle(angle);
   for (auto i = CalledPartPtr; i < PartOrder.end(); i++) {
     auto &part_state = StateMap.at(*i);
-    if (*CalledPartPtr == *i) {
-      part_state.model = glm::translate(part_state.model, Called_part_pivotPoint);
-      part_state.model = glm::rotate(part_state.model, glm::radians(Called_part_state.angle.get_angle_diff()), Called_part_state.axis);
-      part_state.model = glm::translate(part_state.model, -Called_part_pivotPoint);
-    } else {
       glm::qua  rotation          = glm::angleAxis(glm::radians(Called_part_state.angle.get_angle_diff()), Called_part_state.axis);
       glm::mat4 rotation_mat4     = glm::mat4_cast(rotation);
       glm::mat4 backToPivot       = glm::translate(glm::mat4(1.0f), Called_part_pivotPoint);
       glm::mat4 toOrigin          = glm::translate(glm::mat4(1.0f), -Called_part_pivotPoint);
       glm::mat4 combinedTransform = backToPivot * rotation_mat4 * toOrigin;
       part_state.model            = combinedTransform * part_state.model;
-    }
+      part_state.pivotPoint       = combinedTransform * glm::vec4(part_state.pivotPoint, 1.0f);
+      part_state.axis             = glm::normalize(rotation * part_state.axis);
   }
 }
 
