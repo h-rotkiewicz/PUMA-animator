@@ -1,8 +1,5 @@
-
 #include <unordered_map>
-
 #include "camera.h"
-#define Debug
 #include <cmath>
 
 #include "Rendering.h"
@@ -17,11 +14,10 @@ void make_robot(std::unordered_map<RobotParts, Part> &container, PartManager &An
     AnimationEng.addShader(part, Shader(Paths::shaders_vs, Paths::shaders_fs));
   };
 
-  // WARNING: make sure the initialization of parts is in correct order, otherwise the rotations with be bugged
-  make_part(RobotParts::hand, Paths::resources_hand);
   make_part(RobotParts::forearm, Paths::resources_Forearm);
   make_part(RobotParts::joint, Paths::resources_joint);
   make_part(RobotParts::middle_arm, Paths::resources_middle_arm_obj);
+  make_part(RobotParts::hand, Paths::resources_hand);
   make_part(RobotParts::upper_base, Paths::resources_upper_base_obj);
   make_part(RobotParts::base, Paths::resources_base_obj);
 }

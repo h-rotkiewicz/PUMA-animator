@@ -6,33 +6,6 @@
 #include "camera.h"
 #include "settings.h"
 
-// TODO: Delete later
-std::ostream &operator<<(std::ostream &os, const RobotParts &part) {
-  switch (part) {
-    case RobotParts::base:
-      os << "Base";
-      break;
-    case RobotParts::upper_base:
-      os << "Upper Base";
-      break;
-    case RobotParts::middle_arm:
-      os << "Middle Arm";
-      break;
-    case RobotParts::joint:
-      os << "Joint";
-      break;
-    case RobotParts::forearm:
-      os << "Forearm";
-      break;
-    case RobotParts::hand:
-      os << "Hand";
-      break;
-    default:
-      os << "Unknown";
-  }
-  return os;
-}
-
 constexpr auto find_in_array(auto const &array, auto const &part_) {
   for (int i = 0; i < array.size(); i++)
     if (array[i] == part_) return array.begin() + i;
@@ -180,7 +153,7 @@ void PartManager::render_debug(std::unordered_map<RobotParts, Part> const &rende
   DebugShader.use();
   for (auto const &[part, state] : StateMap) {
     glm::mat4 model              = glm::mat4(1.0f);
-    DebugShader.setMat4("model", model);
+    DebugShader.setMat4("model", state.model);
     DebugShader.setMat4("view", state.view);
     DebugShader.setMat4("projection", state.projection);
     DebugShader.setVec3("color", {1, 0, 0});  // Red for PivotPoints
