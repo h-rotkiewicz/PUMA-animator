@@ -1,7 +1,9 @@
 #include "animEng.h"
 
 #include <future>
+#include <ranges>
 
+#include "camera.h"
 #include "settings.h"
 
 // TODO: Delete later
@@ -62,9 +64,10 @@ void PartManager::updateShaders(const Camera &camera, GLFWwindow *window) {
 void PartManager::RotatePart(RobotParts part, float angle) {
   constexpr std::array<RobotParts, Settings::RobotSize> PartOrder{RobotParts::base, RobotParts::upper_base, RobotParts::middle_arm, RobotParts::joint, RobotParts::forearm, RobotParts::hand};
 
-  auto       CalledPartPtr          = find_in_array(PartOrder, part);
-  auto      &Called_part_state      = StateMap.find(part)->second;
-  glm::vec3 &Called_part_pivotPoint = Called_part_state.pivotPoint;
+  auto             CalledPartPtr          = find_in_array(PartOrder, part);
+  auto            &Called_part_state      = StateMap.find(part)->second;
+  const glm::vec3 &Called_part_pivotPoint = Called_part_state.pivotPoint;
+
   Called_part_state.angle.add_angle(angle);
   for (auto i = CalledPartPtr; i < PartOrder.end(); i++) {
     auto &part_state = StateMap.at(*i);
@@ -79,7 +82,6 @@ void PartManager::RotatePart(RobotParts part, float angle) {
       glm::mat4 toOrigin          = glm::translate(glm::mat4(1.0f), -Called_part_pivotPoint);
       glm::mat4 combinedTransform = backToPivot * rotation_mat4 * toOrigin;
       part_state.model            = combinedTransform * part_state.model;
-      // part_state.axis             = combinedTransform * glm::vec4(part_state.axis, 1);
     }
   }
 }
@@ -113,12 +115,6 @@ void PartManager::addShader(RobotParts part, Shader &&shader) {
   StateMap.try_emplace(part, state);
 }
 
-static float getAnswer() {
-  float answer;
-  std::cin >> answer;
-  return answer;
-}
-
 void renderPoint(glm::vec3 pivotPoint) {
   GLuint VAO, VBO;
 
@@ -131,7 +127,7 @@ void renderPoint(glm::vec3 pivotPoint) {
   glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3), &pivotPoint, GL_STATIC_DRAW);
 
   // Bind vertex attribute - assuming the position attribute location is 0
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void *)0);
   glEnableVertexAttribArray(0);
 
   // Draw the point
@@ -147,7 +143,7 @@ void renderPoint(glm::vec3 pivotPoint) {
   glDeleteVertexArrays(1, &VAO);
 }
 
-void renderLine(const glm::vec3& pivotPoint, glm::vec3 axis) {
+void renderLine(const glm::vec3 &pivotPoint, glm::vec3 axis) {
   GLuint VAO, VBO;
 
   glGenVertexArrays(1, &VAO);
@@ -158,14 +154,14 @@ void renderLine(const glm::vec3& pivotPoint, glm::vec3 axis) {
   // Create the vertex buffer data including pivot point and axis endpoint
   glm::vec3 vertices[2];
   vertices[0] = pivotPoint;
-  vertices[1] = pivotPoint + axis*100.f;  // Axis endpoint
+  vertices[1] = pivotPoint + axis * 100.f;  // Axis endpoint
 
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
   // Vertex positions
   glEnableVertexAttribArray(0);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void *)0);
 
   // Draw the line
   glDrawArrays(GL_LINES, 0, 2);
@@ -178,7 +174,8 @@ void renderLine(const glm::vec3& pivotPoint, glm::vec3 axis) {
   glDeleteBuffers(1, &VBO);
   glDeleteVertexArrays(1, &VAO);
 }
-void PartManager::render_debug(std::unordered_map<RobotParts, Part> const &rendercontainer, GLFWwindow *window) const{
+
+void PartManager::render_debug(std::unordered_map<RobotParts, Part> const &rendercontainer, GLFWwindow *window) const {
   for (const auto &[RobotPart, part] : rendercontainer) {
     ShaderMap.at(RobotPart).use();
     part.Render();
@@ -186,14 +183,15 @@ void PartManager::render_debug(std::unordered_map<RobotParts, Part> const &rende
   CheckForErrors("render");
   DebugShader.use();
   for (auto const &[part, state] : StateMap) {
-    DebugShader.setMat4("model", state.model);
+    glm::mat4 model              = glm::mat4(1.0f);
+    DebugShader.setMat4("model", model);
     DebugShader.setMat4("view", state.view);
     DebugShader.setMat4("projection", state.projection);
-    DebugShader.setVec3("color", {1,0,0}); //Red for PivotPoints
+    DebugShader.setVec3("color", {1, 0, 0});  // Red for PivotPoints
     renderPoint(state.pivotPoint);
-    DebugShader.setVec3("color", {0,1,0}); //Green for AxisPoints
-    renderPoint(state.axis+state.pivotPoint);
-    DebugShader.setVec3("color", {0,0,1}); //blue for AxisLines
+    DebugShader.setVec3("color", {0, 1, 0});  // Green for AxisPoints
+    renderPoint(state.axis + state.pivotPoint);
+    DebugShader.setVec3("color", {0, 0, 1});  // blue for AxisLines
     renderLine(state.pivotPoint, state.axis);
   }
   CheckForErrors("Debugrender");

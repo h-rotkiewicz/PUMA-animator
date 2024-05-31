@@ -107,7 +107,7 @@ Part(std::string_view path) {
 void Render() const {
     glBindVertexArray(VAO);
     CheckForErrors(std::string("Binding VAO: ") + std::to_string(VAO));
-    glDrawElements(GL_TRIANGLE_STRIP, ebo_size, GL_UNSIGNED_INT,
+    glDrawElements(GL_LINES, ebo_size, GL_UNSIGNED_INT,
                    0); // traiangle strip Works better ???? why ??
                        // GL_LINES_ADJACENCY also looks cool
                        // GL_LINES also looks cool
