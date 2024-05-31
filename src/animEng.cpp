@@ -146,41 +146,6 @@ void renderPoint(glm::vec3 pivotPoint) {
   glDeleteBuffers(1, &VBO);
   glDeleteVertexArrays(1, &VAO);
 }
-void renderAxisLines(const glm::vec3& pivotPoint, const glm::vec3 axis[3]) {
-  GLuint VAO, VBO;
-
-  glGenVertexArrays(1, &VAO);
-  glGenBuffers(1, &VBO);
-
-  glBindVertexArray(VAO);
-
-  // Create the vertex buffer data including pivot point and axis endpoints
-  glm::vec3 vertices[6];
-  vertices[0] = pivotPoint;
-  vertices[1] = pivotPoint + axis[0];  // X axis
-  vertices[2] = pivotPoint;
-  vertices[3] = pivotPoint + axis[1];  // Y axis
-  vertices[4] = pivotPoint;
-  vertices[5] = pivotPoint + axis[2];  // Z axis
-
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-  // Vertex positions
-  glEnableVertexAttribArray(0);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
-
-  // Draw the lines
-  glDrawArrays(GL_LINES, 0, 6);
-
-  // Unbind and cleanup
-  glDisableVertexAttribArray(0);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-  glBindVertexArray(0);
-
-  glDeleteBuffers(1, &VBO);
-  glDeleteVertexArrays(1, &VAO);
-}
 
 void renderLine(const glm::vec3& pivotPoint, glm::vec3 axis) {
   GLuint VAO, VBO;
