@@ -1,23 +1,20 @@
 #include "animEng.h"
 
-#include <future>
-#include <ranges>
-
-#include "camera.h"
 #include "settings.h"
 
-constexpr auto find_in_array(auto const &array, auto const &part_) {
-  for (int i = 0; i < array.size(); i++)
+constexpr std::array<RobotParts, Settings::RobotSize> PartOrder{RobotParts::base, RobotParts::upper_base, RobotParts::middle_arm, RobotParts::joint, RobotParts::forearm, RobotParts::hand};
+constexpr auto                                        find_in_array(auto const &array, auto const &part_) {
+  for (size_t i = 0; i < array.size(); i++)
     if (array[i] == part_) return array.begin() + i;
   throw std::runtime_error("Part not found in Container");
 }
 
-void PartManager::updateShaders(const Camera &camera, GLFWwindow *window) {
+void PartManager::updateShaders(const Camera &camera) {
   auto UpdateShader = [&](Shader const &S, ModelState &state) {
     S.use();
     glm::mat4 view(1.0f);
     glm::mat4 projection(1.0f);
-    projection = glm::perspective(glm::radians(45.0f), (float)Settings::SCR_WIDTH / (float)Settings::SCR_HEIGHT, 0.1f, 100.0f);
+    projection = glm::perspective(glm::radians(45.0f), (float)Settings::Window_Width / (float)Settings::Window_Height, 0.1f, 100.0f);
     view       = glm::lookAt(camera.cameraPosition, camera.getCameraTarget(), camera.getCameraUp());
 
     S.setMat4("projection", projection);
@@ -27,31 +24,29 @@ void PartManager::updateShaders(const Camera &camera, GLFWwindow *window) {
               camera.cameraPosition);  // I think it makes sense for max visibility
     S.setVec3("viewPos", camera.cameraPosition);
     S.setMat4("model", state.model);
+    glUniform1i(glGetUniformLocation(S.ID, "texture1"), 0);
+    S.setInt("texture1", 0);
     state.projection = projection;
     state.view       = view;
   };
   for (auto const &shader : ShaderMap) UpdateShader(shader.second, StateMap.at(shader.first));
 }
 
-// WARNING: PAIN AND SUFFERING AHEAD
 void PartManager::RotatePart(RobotParts part, float angle) {
-  constexpr std::array<RobotParts, Settings::RobotSize> PartOrder{RobotParts::base, RobotParts::upper_base, RobotParts::middle_arm, RobotParts::joint, RobotParts::forearm, RobotParts::hand};
-
   auto             CalledPartPtr          = find_in_array(PartOrder, part);
   auto            &Called_part_state      = StateMap.find(part)->second;
   const glm::vec3 &Called_part_pivotPoint = Called_part_state.pivotPoint;
-
-  Called_part_state.angle.add_angle(angle);
+  Called_part_state.angle = angle;
   for (auto i = CalledPartPtr; i < PartOrder.end(); i++) {
-    auto &part_state = StateMap.at(*i);
-      glm::qua  rotation          = glm::angleAxis(glm::radians(Called_part_state.angle.get_angle_diff()), Called_part_state.axis);
-      glm::mat4 rotation_mat4     = glm::mat4_cast(rotation);
-      glm::mat4 backToPivot       = glm::translate(glm::mat4(1.0f), Called_part_pivotPoint);
-      glm::mat4 toOrigin          = glm::translate(glm::mat4(1.0f), -Called_part_pivotPoint);
-      glm::mat4 combinedTransform = backToPivot * rotation_mat4 * toOrigin;
-      part_state.model            = combinedTransform * part_state.model;
-      part_state.pivotPoint       = combinedTransform * glm::vec4(part_state.pivotPoint, 1.0f);
-      part_state.axis             = glm::normalize(rotation * part_state.axis);
+    auto     &part_state        = StateMap.at(*i);
+    glm::qua  rotation          = glm::angleAxis(glm::radians(Called_part_state.angle), Called_part_state.axis);
+    glm::mat4 rotation_mat4     = glm::mat4_cast(rotation);
+    glm::mat4 backToPivot       = glm::translate(glm::mat4(1.0f), Called_part_pivotPoint);
+    glm::mat4 toOrigin          = glm::translate(glm::mat4(1.0f), -Called_part_pivotPoint);
+    glm::mat4 combinedTransform = backToPivot * rotation_mat4 * toOrigin;
+    part_state.model            = combinedTransform * part_state.model;
+    part_state.pivotPoint       = combinedTransform * glm::vec4(part_state.pivotPoint, 1.0f);
+    part_state.axis             = glm::normalize(rotation * part_state.axis);
   }
 }
 
@@ -61,7 +56,6 @@ void PartManager::addShader(RobotParts part, Shader &&shader) {
   ShaderMap.emplace(part, std::move(shader));
   ModelState state{.axis = {0, 0, 0}, .pivotPoint{0, 0, 0}, .angle{}};
 
-  // WARNING: Data from blender do not change. conversion from blender to .obj (x,y,z) -> (x,z,y) ?? idk why
   if (part == RobotParts::base) {
     state.axis       = {0, 0, 0};
     state.pivotPoint = {0, 0, 0};
@@ -84,7 +78,7 @@ void PartManager::addShader(RobotParts part, Shader &&shader) {
   StateMap.try_emplace(part, state);
 }
 
-void renderPoint(glm::vec3 pivotPoint) {
+void renderPoint(const glm::vec3 &pivotPoint) {
   GLuint VAO, VBO;
 
   glGenVertexArrays(1, &VAO);
@@ -95,15 +89,12 @@ void renderPoint(glm::vec3 pivotPoint) {
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3), &pivotPoint, GL_STATIC_DRAW);
 
-  // Bind vertex attribute - assuming the position attribute location is 0
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void *)0);
   glEnableVertexAttribArray(0);
 
-  // Draw the point
-  glPointSize(20.0f);  // Set the point size if necessary
+  glPointSize(20.0f);
   glDrawArrays(GL_POINTS, 0, 1);
 
-  // Unbind and cleanup
   glDisableVertexAttribArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   glBindVertexArray(0);
@@ -112,7 +103,7 @@ void renderPoint(glm::vec3 pivotPoint) {
   glDeleteVertexArrays(1, &VAO);
 }
 
-void renderLine(const glm::vec3 &pivotPoint, glm::vec3 axis) {
+void renderLine(const glm::vec3 &pivotPoint, const glm::vec3 &axis) {
   GLuint VAO, VBO;
 
   glGenVertexArrays(1, &VAO);
@@ -120,7 +111,6 @@ void renderLine(const glm::vec3 &pivotPoint, glm::vec3 axis) {
 
   glBindVertexArray(VAO);
 
-  // Create the vertex buffer data including pivot point and axis endpoint
   glm::vec3 vertices[2];
   vertices[0] = pivotPoint;
   vertices[1] = pivotPoint + axis * 100.f;  // Axis endpoint
@@ -152,7 +142,6 @@ void PartManager::render_debug(std::unordered_map<RobotParts, Part> const &rende
   CheckForErrors("render");
   DebugShader.use();
   for (auto const &[part, state] : StateMap) {
-    glm::mat4 model              = glm::mat4(1.0f);
     DebugShader.setMat4("model", state.model);
     DebugShader.setMat4("view", state.view);
     DebugShader.setMat4("projection", state.projection);

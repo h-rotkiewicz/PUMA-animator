@@ -1,9 +1,9 @@
-#include <unordered_map>
-#include "camera.h"
+#define Debug
 #include <cmath>
+#include <unordered_map>
 
-#include "Rendering.h"
 #include "animEng.h"
+#include "camera.h"
 #include "common.h"
 #include "defines.h"
 #include "paths.h"
@@ -22,7 +22,7 @@ void make_robot(std::unordered_map<RobotParts, Part> &container, PartManager &An
   make_part(RobotParts::base, Paths::resources_base_obj);
 }
 
-void processInput(GLFWwindow *window, Camera &camera, std::unordered_map<RobotParts, Part> &Parts, PartManager &AnimationEng) {
+void processInput(GLFWwindow *window, Camera &camera, PartManager &AnimationEng) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) glfwSetWindowShouldClose(window, true);
   if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) camera.Orbit(1.f, glm::vec3(1.0f, 0.0f, 0.0f));
   if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) camera.Orbit(-1.f, glm::vec3(1.0f, 0.0f, 0.0f));
@@ -45,21 +45,19 @@ int main() {
     GLFWwindow *window = init();
     Camera      camera(Radius, 0, {0.0f, 0.0f, 0.0f});
     Shader      shader(Paths::shaders_vs, Paths::shaders_fs);
-    PartManager partManger;
-
-    std::unordered_map<RobotParts, Part> Parts;
-    make_robot(Parts, partManger);
-
-    while (!glfwWindowShouldClose(window)) {
-      preRender();
-      processInput(window, camera, Parts, partManger);
-      partManger.updateShaders(camera, window);
-#ifdef Debug
-      partManger.render_debug(Parts, window);
-#else
-      partManger.render(Parts, window);
-#endif
-      CheckForErrors("Something went wrong ");
+    try {
+      PartManager                          partManger;
+      std::unordered_map<RobotParts, Part> Parts;
+      make_robot(Parts, partManger);
+      while (!glfwWindowShouldClose(window)) {
+        preRender();
+        processInput(window, camera, partManger);
+        partManger.updateShaders(camera);
+        partManger.render(Parts, window);
+        CheckForErrors("Something went wrong ");
+      }
+    } catch (std::exception &e) {
+      std::cerr << e.what() << std::endl;
     }
   }
   glfwTerminate();

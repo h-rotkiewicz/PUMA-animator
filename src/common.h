@@ -2,18 +2,15 @@
 // clang-format off
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-
+#define STB_IMAGE_IMPLEMENTATION
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 // clang-format on 
-#include <iostream>
 #include <string_view>
-#include <utility>
 #include <vector>
 
 #include "OBJ_Loader.h"
-#include "settings.h"
 
 enum class RobotParts { base, upper_base, middle_arm, joint, forearm, hand };
 
@@ -30,9 +27,10 @@ public:
   ~Part() ;
 };
 
-void CheckForErrors(std::string_view message = "") ;
-void framebuffer_size_callback(GLFWwindow *window, int width, int height) ;
-void preRender() ;
-GLFWwindow *init() ;
-std::tuple<GLuint,GLuint,GLuint> bindBuffers(const std::vector<objl::Vertex> &vertices,const std::vector<unsigned int> &indices) ;
+void CheckForErrors(std::string_view message = "");
+void framebufferSizeCallback(GLFWwindow *window, int width, int height);
+void preRender();
+GLFWwindow *init();
+std::tuple<GLuint,GLuint,GLuint> bindBuffers(const std::vector<objl::Vertex> &vertices,const std::vector<unsigned int> &indices);
 std::tuple<GLuint, GLuint, GLuint, std::size_t> load_vxo(std::string_view path);
+

@@ -1,5 +1,11 @@
 #include "common.h"
-void framebuffer_size_callback(GLFWwindow *window, int width, int height) { glViewport(0, 0, width, height); }
+
+#include <utility>
+
+#include "paths.h"
+#include "settings.h"
+#include "stb_image.h"
+void framebufferSizeCallback(GLFWwindow *window, int width, int height) { glViewport(0, 0, width, height); }
 
 void CheckForErrors(std::string_view message) {
   GLenum error = glGetError();
@@ -16,19 +22,20 @@ GLFWwindow *init() {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-  GLFWwindow *window = glfwCreateWindow(Settings::SCR_WIDTH, Settings::SCR_HEIGHT, "Puma", NULL, NULL);
+  GLFWwindow *window = glfwCreateWindow(Settings::Window_Width, Settings::Window_Height, "Puma", NULL, NULL);
   if (window == nullptr) {
     glfwTerminate();
     throw std::runtime_error("Failed to create GLFW window");
   }
   glfwMakeContextCurrent(window);
-  glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+  glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
 
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) throw std::runtime_error("Failed to init GLAD ");
   glEnable(GL_DEPTH_TEST);
   return window;
 }
 
+//Returns VAO,VBO,EBO in this order
 std::tuple<GLuint, GLuint, GLuint> bindBuffers(const std::vector<objl::Vertex> &vertices, const std::vector<unsigned int> &indices) {
   GLuint VBO, VAO, EBO;
   glGenVertexArrays(1, &VAO);
@@ -59,16 +66,20 @@ std::tuple<GLuint, GLuint, GLuint> bindBuffers(const std::vector<objl::Vertex> &
   return {VAO, VBO, EBO};
 }
 
-std::tuple<GLuint, GLuint, GLuint, std::size_t> load_vxo(std::string_view path) {
+void load_vxo(std::string_view path, GLuint &VAO, GLuint &VBO, GLuint &EBO, size_t &ebo_size) {
   objl::Loader Loader;
   if (!Loader.LoadFile(path.data())) {
     std::cerr << "Failed to load OBJ file." << path.data() << std::endl;
     throw std::runtime_error("Failed to load OBJ file.");
   }
-  auto indices         = Loader.LoadedIndices;
-  auto [VAO, VBO, EBO] = bindBuffers(Loader.LoadedVertices, indices);
-  return {VAO, VBO, EBO, indices.size()};
+  auto indices            = Loader.LoadedIndices;
+  auto [VAO_, VBO_, EBO_] = bindBuffers(Loader.LoadedVertices, indices);
+  VAO                     = VAO_;
+  VBO                     = VBO_;
+  EBO                     = EBO_;
+  ebo_size                = indices.size();
 }
+
 void Part::Render() const {
   glBindVertexArray(VAO);
   CheckForErrors(std::string("Binding VAO: ") + std::to_string(VAO));
@@ -88,11 +99,8 @@ Part::~Part() {
 }
 
 Part::Part(std::string_view path) {
-  auto [VAO_, VBO_, EBO_, Size] = load_vxo(path);
-  VAO                           = VAO_;
-  VBO                           = VBO_;
-  EBO                           = EBO_;
-  ebo_size                      = Size;
+  load_vxo(path, VAO, VBO, EBO, ebo_size);
+  int width, height, nrChannels;
 }
 
 Part &Part::operator=(Part &&other) {
@@ -109,4 +117,3 @@ Part::Part(Part &&other) {
   EBO      = std::exchange(other.EBO, 0);
   ebo_size = std::exchange(other.ebo_size, 0);
 }
-

@@ -1,6 +1,4 @@
 #pragma once
-
-#include <cstring>
 #ifndef SHADERS_DIR
 #error SHADERS_DIR is not defined
 #endif
