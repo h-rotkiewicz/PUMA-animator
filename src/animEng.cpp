@@ -12,10 +12,8 @@ constexpr auto                                        find_in_array(auto const &
 void PartManager::updateShaders(const Camera &camera) {
   auto UpdateShader = [&](Shader const &S, ModelState &state) {
     S.use();
-    glm::mat4 view(1.0f);
-    glm::mat4 projection(1.0f);
-    projection = glm::perspective(glm::radians(45.0f), (float)Settings::Window_Width / (float)Settings::Window_Height, 0.1f, 100.0f);
-    view       = glm::lookAt(camera.cameraPosition, camera.getCameraTarget(), camera.getCameraUp());
+    auto projection = glm::perspective(glm::radians(45.0f), (float)Settings::Window_Width / (float)Settings::Window_Height, 0.1f, 100.0f);
+    auto view       = glm::lookAt(camera.cameraPosition, camera.getCameraTarget(), camera.getCameraUp());
 
     S.setMat4("projection", projection);
     S.setMat4("view", view);
@@ -33,20 +31,20 @@ void PartManager::updateShaders(const Camera &camera) {
 }
 
 void PartManager::RotatePart(RobotParts part, float angle) {
-  auto             CalledPartPtr          = find_in_array(PartOrder, part);
-  auto            &Called_part_state      = StateMap.find(part)->second;
+  const auto       CalledPartPtr          = find_in_array(PartOrder, part);
+  auto      &Called_part_state      = StateMap.find(part)->second;
   const glm::vec3 &Called_part_pivotPoint = Called_part_state.pivotPoint;
-  Called_part_state.angle = angle;
+  Called_part_state.angle                 = angle;
   for (auto i = CalledPartPtr; i < PartOrder.end(); i++) {
-    auto     &part_state        = StateMap.at(*i);
-    glm::qua  rotation          = glm::angleAxis(glm::radians(Called_part_state.angle), Called_part_state.axis);
-    glm::mat4 rotation_mat4     = glm::mat4_cast(rotation);
-    glm::mat4 backToPivot       = glm::translate(glm::mat4(1.0f), Called_part_pivotPoint);
-    glm::mat4 toOrigin          = glm::translate(glm::mat4(1.0f), -Called_part_pivotPoint);
-    glm::mat4 combinedTransform = backToPivot * rotation_mat4 * toOrigin;
-    part_state.model            = combinedTransform * part_state.model;
-    part_state.pivotPoint       = combinedTransform * glm::vec4(part_state.pivotPoint, 1.0f);
-    part_state.axis             = glm::normalize(rotation * part_state.axis);
+    auto           &part_state        = StateMap.at(*i);
+    const glm::qua  rotation          = glm::angleAxis(glm::radians(Called_part_state.angle), Called_part_state.axis);
+    const glm::mat4 rotation_mat4     = glm::mat4_cast(rotation);
+    const glm::mat4 backToPivot       = glm::translate(glm::mat4(1.0f), Called_part_pivotPoint);
+    const glm::mat4 toOrigin          = glm::translate(glm::mat4(1.0f), -Called_part_pivotPoint);
+    const glm::mat4 combinedTransform = backToPivot * rotation_mat4 * toOrigin;
+    part_state.model                  = combinedTransform * part_state.model;
+    part_state.pivotPoint             = combinedTransform * glm::vec4(part_state.pivotPoint, 1.0f);
+    part_state.axis                   = glm::normalize(rotation * part_state.axis);
   }
 }
 
@@ -89,7 +87,7 @@ void renderPoint(const glm::vec3 &pivotPoint) {
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3), &pivotPoint, GL_STATIC_DRAW);
 
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void *)0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), nullptr);
   glEnableVertexAttribArray(0);
 
   glPointSize(20.0f);
@@ -103,7 +101,7 @@ void renderPoint(const glm::vec3 &pivotPoint) {
   glDeleteVertexArrays(1, &VAO);
 }
 
-void renderLine(const glm::vec3 &pivotPoint, const glm::vec3 &axis) {
+void renderLine(const glm::vec3 &start, const glm::vec3 &end) {
   GLuint VAO, VBO;
 
   glGenVertexArrays(1, &VAO);
@@ -111,16 +109,14 @@ void renderLine(const glm::vec3 &pivotPoint, const glm::vec3 &axis) {
 
   glBindVertexArray(VAO);
 
-  glm::vec3 vertices[2];
-  vertices[0] = pivotPoint;
-  vertices[1] = pivotPoint + axis * 100.f;  // Axis endpoint
+  const std::array Line = {start, start + end};
 
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(Line), &Line, GL_STATIC_DRAW);
 
   // Vertex positions
   glEnableVertexAttribArray(0);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void *)0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), nullptr);
 
   // Draw the line
   glDrawArrays(GL_LINES, 0, 2);

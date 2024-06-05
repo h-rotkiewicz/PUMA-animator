@@ -36,6 +36,6 @@ void CheckForErrors(std::string_view message = "");
 void framebufferSizeCallback([[maybe_unused]]GLFWwindow *window, int width, int height);
 void preRender();
 GLFWwindow *init();
-GLBuffers bindBuffers(const std::span<GLuint>& vertices, const std::span<unsigned int>& indices);
+GLBuffers bindBuffers(const std::vector<GLuint>& vertices, const std::vector<unsigned int>& indices);
 GLBuffers load_vxo(std::string_view path);
 

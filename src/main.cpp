@@ -10,7 +10,7 @@
 
 void make_robot(std::unordered_map<RobotParts, Part> &container, PartManager &AnimationEng) {
   auto make_part = [&container, &AnimationEng](RobotParts part, const char *path) {
-    container.try_emplace(part, Part(path));
+    container.try_emplace(part, path);
     AnimationEng.addShader(part, Shader(Paths::shaders_vs, Paths::shaders_fs));
   };
 

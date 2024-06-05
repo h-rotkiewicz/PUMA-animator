@@ -7,7 +7,7 @@
 struct ModelState {
   glm::vec3 axis{};
   glm::vec3 pivotPoint{};
-  float       angle{};
+  float     angle{};
   glm::mat4 model      = glm::identity<glm::mat4>();
   glm::mat4 projection = glm::identity<glm::mat4>();
   glm::mat4 view       = glm::identity<glm::mat4>();
@@ -22,6 +22,7 @@ class PartManager {
   void render(std::unordered_map<RobotParts, Part> const &rendercontainer, GLFWwindow *window) const;
 
   std::unordered_map<RobotParts, Shader> const &getShaderMap() const;
+
  private:
   std::unordered_map<RobotParts, ModelState> StateMap{};
   std::unordered_map<RobotParts, Shader>     ShaderMap{};
