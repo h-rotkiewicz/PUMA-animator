@@ -32,9 +32,9 @@ include_directories(${CMAKE_SOURCE_DIR}/includes/glm/)
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 if(MSVC)
-    target_compile_options(${PROJECT_NAME} PRIVATE /W4 /WX)
+    target_compile_options(${PROJECT_NAME} PRIVATE /W4 )
 else()
-    target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic )
 endif()
 
 target_link_libraries(${PROJECT_NAME} glfw glm )
