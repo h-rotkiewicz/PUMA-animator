@@ -45,6 +45,9 @@ jobs:
             c_compiler: cl
 
     steps:
+    - name: Setup OpenGL
+    - uses: openrndr/setup-opengl@v1.1   
+    - run: xvfb-run glxinfo
     - uses: actions/checkout@v4
 
     - name: Set reusable strings
