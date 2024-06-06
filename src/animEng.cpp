@@ -9,8 +9,8 @@ constexpr auto                                        find_in_array(auto const &
   throw std::runtime_error("Part not found in Container");
 }
 
-void PartManager::updateShaders(const Camera &camera) {
-  auto UpdateShader = [&](Shader const &S, ModelState &state) {
+
+  auto UpdateShader = [](Shader const &S, ModelState &state, Camera const &camera) {
     S.use();
     auto projection = glm::perspective(glm::radians(45.0f), (float)Settings::Window_Width / (float)Settings::Window_Height, 0.1f, 100.0f);
     auto view       = glm::lookAt(camera.cameraPosition, camera.getCameraTarget(), camera.getCameraUp());
@@ -27,7 +27,9 @@ void PartManager::updateShaders(const Camera &camera) {
     state.projection = projection;
     state.view       = view;
   };
-  for (auto const &shader : ShaderMap) UpdateShader(shader.second, StateMap.at(shader.first));
+
+void PartManager::updateShaders(const Camera &camera) {
+  for (auto const &shader : ShaderMap) UpdateShader(shader.second, StateMap.at(shader.first), camera);
 }
 
 void PartManager::RotatePart(RobotParts part, float angle) {
@@ -153,12 +155,21 @@ void PartManager::render_debug(std::unordered_map<RobotParts, Part> const &rende
   glfwPollEvents();
 }
 
-void PartManager::render(std::unordered_map<RobotParts, Part> const &rendercontainer, GLFWwindow *window) const {
+
+void PartManager::render(std::unordered_map<RobotParts, Part> const &rendercontainer) const {
   for (const auto &[RobotPart, part] : rendercontainer) {
     ShaderMap.at(RobotPart).use();
     part.Render();
   }
-  CheckForErrors("render");
-  glfwSwapBuffers(window);
-  glfwPollEvents();
+}
+
+void Point::render() const {
+  pointshader.use();
+  pointshader.setVec3("color", color);
+  renderPoint(position);
+  renderLine({0,0,0}, position);
+}
+
+void Point::updateShaders(Camera const & camera){
+  UpdateShader(pointshader, state, camera);
 }
