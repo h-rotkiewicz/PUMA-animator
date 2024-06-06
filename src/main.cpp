@@ -39,12 +39,39 @@ void processInput(GLFWwindow *window, Camera &camera, PartManager &AnimationEng)
   if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) AnimationEng.RotatePart(RobotParts::hand, 1.f);
 }
 
+
+template<typename T>
+concept Container = requires(T t) {
+  std::begin(t);
+  std::end(t);
+};
+
+template<Container T>
+void render_helper(T const & cont){
+  for(auto const &elem : cont){
+    elem.render();
+  }
+}
+
+void render_helper(auto const & elem){
+    elem.render();
+}
+
+void render(const PartManager &PartsManager, GLFWwindow *window, const std::unordered_map<RobotParts, Part> &RobotParts, auto const &... part) {
+  PartsManager.render(RobotParts);
+  (render_helper(part),...);
+  CheckForErrors("render");
+  glfwSwapBuffers(window);
+  glfwPollEvents();
+}
+
 int main() {
   {
     int         Radius = 3;
     GLFWwindow *window = init();
     Camera      camera(Radius, 0, {0.0f, 0.0f, 0.0f});
     Shader      shader(Paths::shaders_vs, Paths::shaders_fs);
+    Point       point({1, 1, 1}, {1,0,0});
     try {
       PartManager                          partManger;
       std::unordered_map<RobotParts, Part> Parts;
@@ -52,8 +79,9 @@ int main() {
       while (!glfwWindowShouldClose(window)) {
         preRender();
         processInput(window, camera, partManger);
+        point.updateShaders(camera);
         partManger.updateShaders(camera);
-        partManger.render(Parts, window);
+        render(partManger, window, Parts, point);
         CheckForErrors("Something went wrong ");
       }
     } catch (std::exception &e) {
