@@ -65,6 +65,24 @@ void render(const PartManager &PartsManager, GLFWwindow *window, const std::unor
   glfwPollEvents();
 }
 
+template<Container T>
+void update_helper(T & cont, Camera const & camera){
+  for(auto const &elem : cont){
+    elem.updateShaders(camera);
+  }
+}
+
+void update_helper(auto & elem, Camera const & camera){
+    elem.updateShaders(camera);
+}
+
+void updateShaders(PartManager &PartsManager,Camera const & camera,  auto &... part) {
+  PartsManager.updateShaders(camera);
+  (update_helper(part,camera),...);
+  CheckForErrors("Shader Update");
+}
+
+
 int main() {
   {
     int         Radius = 3;
@@ -79,8 +97,7 @@ int main() {
       while (!glfwWindowShouldClose(window)) {
         preRender();
         processInput(window, camera, partManger);
-        point.updateShaders(camera);
-        partManger.updateShaders(camera);
+        updateShaders(partManger,camera, point);
         render(partManger, window, Parts, point);
         CheckForErrors("Something went wrong ");
       }
