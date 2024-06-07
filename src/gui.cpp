@@ -6,9 +6,9 @@ void Gui::renderImguiWindow() {
 
   if (ImGui::Begin("3D Coordinate Input", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize)) {
     ImGui::Text("Enter 3D Coordinates:");
-    ImGui::SliderFloat("X", &CurrentPointPos.x, -1.0f, 1.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
-    ImGui::SliderFloat("Y", &CurrentPointPos.y, -1.0f, 1.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
-    ImGui::SliderFloat("Z", &CurrentPointPos.z, -1.0f, 1.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+    ImGui::SliderFloat("X", &CurrentPointPos.x, -2.0f, 2.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+    ImGui::SliderFloat("Y", &CurrentPointPos.y, -2.0f, 2.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+    ImGui::SliderFloat("Z", &CurrentPointPos.z, -2.0f, 2.0f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
     ImGui::Checkbox("Rotate to Point", &rotateToPoint);
   }
   ImGui::End();

@@ -32,11 +32,11 @@ void processInput(GLFWwindow *window, Camera &camera, PartManager &AnimationEng)
   if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) camera.change_vert_offset(-0.01);
   if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) camera.change_radius(0.01);
   if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) camera.change_radius(-0.01);
-  if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS) AnimationEng.RotatePart(RobotParts::upper_base, 1.f);
-  if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) AnimationEng.RotatePart(RobotParts::middle_arm, 1.f);
-  if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) AnimationEng.RotatePart(RobotParts::joint, 1.f);
-  if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) AnimationEng.RotatePart(RobotParts::forearm, 1.f);
-  if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) AnimationEng.RotatePart(RobotParts::hand, 1.f);
+  if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS) AnimationEng.RotatePart(RobotParts::upper_base);
+  if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) AnimationEng.RotatePart(RobotParts::middle_arm);
+  if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) AnimationEng.RotatePart(RobotParts::joint);
+  if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) AnimationEng.RotatePart(RobotParts::forearm);
+  if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) AnimationEng.RotatePart(RobotParts::hand);
 }
 
 template <typename T>
@@ -96,7 +96,6 @@ int main() {
         updateShaders(partManger, camera, endPoint);
         render(partManger, Parts, endPoint);
         gui.renderImguiWindow();
-        
 
         CheckForErrors("Something went wrong ");
         glfwSwapBuffers(window);

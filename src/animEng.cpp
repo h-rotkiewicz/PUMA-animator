@@ -34,16 +34,16 @@ void PartManager::updateShaders(const Camera &camera) {
 }
 
 
-float PartManager::RotatePart(RobotParts part, float angle = 1.f) {
+//Angle in radians
+float PartManager::RotatePart(RobotParts part, float angle) {
   if (angle == 0) return StateMap.find(part)->second.angle;
   const auto       CalledPartPtr          = find_in_array(PartOrder, part);
   auto            &Called_part_state      = StateMap.find(part)->second;
   const glm::vec3 &Called_part_pivotPoint = Called_part_state.pivotPoint;
   Called_part_state.angle += angle;
-  Called_part_state.angle = NormalizeAngle(Called_part_state.angle);
   for (auto i = CalledPartPtr; i < PartOrder.end(); i++) {
     auto           &part_state        = StateMap.at(*i);
-    const glm::qua  rotation          = glm::angleAxis(glm::radians(angle), Called_part_state.axis);
+    const glm::qua  rotation          = glm::angleAxis(angle, Called_part_state.axis);
     const glm::mat4 rotation_mat4     = glm::mat4_cast(rotation);
     const glm::mat4 backToPivot       = glm::translate(glm::mat4(1.0f), Called_part_pivotPoint);
     const glm::mat4 toOrigin          = glm::translate(glm::mat4(1.0f), -Called_part_pivotPoint);
@@ -211,3 +211,43 @@ Part::Part(Part &&other) {
   buffers.EBO      = std::exchange(other.buffers.EBO, 0);
   buffers.ebo_size = std::exchange(other.buffers.ebo_size, 0);
 }
+void PartManager::rotateToPoint(glm::vec3 const &endPos) {
+  using namespace std;
+  using namespace RobotDimensions;
+
+  /* Math and how OpenGl deals with coords have different conventions ergo the weird naming*/
+  const auto  x     = endPos.x;
+  const auto  y     = -endPos.z;
+  const auto  z     = endPos.y;
+  const float Speed = 0.05f;
+
+  const float theta1            = (StateMap[RobotParts::upper_base].angle);
+  const float theta2            = (StateMap[RobotParts::middle_arm].angle);
+  const float theta3            = (StateMap[RobotParts::joint].angle);
+  const float TargetBaseAngle   = (atan2(y, x));
+  const auto  bigDelta          = x * cos(TargetBaseAngle) + y * sin(TargetBaseAngle);
+  const auto  omega             = z - L1;
+  const auto  delta             = pow(2 * bigDelta * L2, 2) + pow(2 * omega * L2, 2) - pow((pow(bigDelta, 2) + pow(omega, 2) + pow(L2, 2) - pow(L3, 2)), 2);
+  const float TargetMiddleAngle = (atan2(2 * omega * L2 * (bigDelta * bigDelta + omega * omega + L2 * L2 - L3 * L3) - 2 * bigDelta * L2 * sqrt(delta),
+                                                      2 * omega * L2 * (bigDelta * bigDelta + omega * omega + L2 * L2 - L3 * L3) + 2 * bigDelta * L2 * sqrt(delta)));
+  const float TargetJointAngle  = (-TargetMiddleAngle + atan2(omega - L2 * sin(TargetMiddleAngle), bigDelta - L2 * cos(TargetMiddleAngle)));
+
+  if (delta < 0) cerr << "No solution" << endl;
+
+  if (!moreOrLess(theta1, TargetBaseAngle,Speed)) {
+    std::cout << "Base angle: " << theta2 << std::endl;
+    std::cout << "Target Base angle: " << TargetMiddleAngle << std::endl;
+    RotatePart(RobotParts::upper_base, getRotationDirection(theta1, TargetBaseAngle) * Speed);
+  }
+  if (!moreOrLess(theta2, TargetMiddleAngle,Speed)) {
+    std::cout << "Middle arm angle: " << theta2 << std::endl;
+    std::cout << "Target middle angle: " << TargetMiddleAngle << std::endl;
+    RotatePart(RobotParts::middle_arm, getRotationDirection(theta2, TargetMiddleAngle) * Speed);
+  }
+  if (!moreOrLess(theta3, TargetJointAngle, Speed)) {
+    std::cout << "Joint angle: " << theta3 << std::endl;
+    std::cout << "Target joint angle: " << TargetJointAngle << std::endl;
+    RotatePart(RobotParts::joint, getRotationDirection(theta3, TargetJointAngle) * Speed);
+  }
+}
+
