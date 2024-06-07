@@ -5,9 +5,10 @@
 #include <utility>
 
 #include "OBJ_Loader.h"
+#include "imgui.h"
 #include "settings.h"
 #include "stb_image.h"
-void framebufferSizeCallback([[maybe_unused]]GLFWwindow *window, int width, int height) { glViewport(0, 0, width, height); }
+void framebufferSizeCallback([[maybe_unused]] GLFWwindow *window, int width, int height) { glViewport(0, 0, width, height); }
 
 void CheckForErrors(std::string_view message) {
   GLenum error = glGetError();
@@ -37,7 +38,8 @@ GLFWwindow *init() {
   return window;
 }
 
-GLBuffers bindBuffers(std::vector<objl::Vertex> const & vertices, std::vector<unsigned int>const& indices) {
+
+GLBuffers bindBuffers(std::vector<objl::Vertex> const &vertices, std::vector<unsigned int> const &indices) {
   GLuint VBO, VAO, EBO;
   glGenVertexArrays(1, &VAO);
   glGenBuffers(1, &VBO);
@@ -46,7 +48,7 @@ GLBuffers bindBuffers(std::vector<objl::Vertex> const & vertices, std::vector<un
   glBindVertexArray(VAO);
 
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER,  vertices.size()* sizeof(objl::Vertex), vertices.data(), GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(objl::Vertex), vertices.data(), GL_STATIC_DRAW);
 
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
@@ -73,7 +75,7 @@ GLBuffers load_vxo(std::string_view path) {
     std::cerr << "Failed to load OBJ file." << path.data() << std::endl;
     throw std::runtime_error("Failed to load OBJ file.");
   }
-  return  bindBuffers(Loader.LoadedVertices, Loader.LoadedIndices);
+  return bindBuffers(Loader.LoadedVertices, Loader.LoadedIndices);
 }
 
 void Part::Render() const {
@@ -94,9 +96,7 @@ Part::~Part() {
   glDeleteBuffers(1, &buffers.EBO);
 }
 
-Part::Part(std::string_view path) {
-  buffers = load_vxo(path);
-}
+Part::Part(std::string_view path) { buffers = load_vxo(path); }
 
 Part &Part::operator=(Part &&other) {
   buffers.VAO      = std::exchange(other.buffers.VAO, 0);

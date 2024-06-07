@@ -25,10 +25,14 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/includes/glfw)
 add_subdirectory(${CMAKE_SOURCE_DIR}/includes/glm)
 
 
-file(GLOB SOURCES "src/*.cpp" "src/*.c")
+file(GLOB SOURCES "src/*.cpp" "src/*.c" "includes/imgui/*.cpp" "includes/imgui/backends/imgui_impl_glfw.cpp" "includes/imgui/backends/imgui_impl_opengl3.cpp")
 
 include_directories(${CMAKE_SOURCE_DIR}/includes)
 include_directories(${CMAKE_SOURCE_DIR}/includes/glm/)
+
+include_directories(${CMAKE_SOURCE_DIR}/includes/imgui)
+include_directories(${CMAKE_SOURCE_DIR}/includes/imgui/backends)
+
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 if(MSVC)

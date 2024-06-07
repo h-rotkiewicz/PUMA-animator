@@ -6,6 +6,7 @@
 #include "camera.h"
 #include "common.h"
 #include "defines.h"
+#include "gui.h"
 #include "paths.h"
 
 void make_robot(std::unordered_map<RobotParts, Part> &container, PartManager &AnimationEng) {
@@ -13,7 +14,6 @@ void make_robot(std::unordered_map<RobotParts, Part> &container, PartManager &An
     container.try_emplace(part, path);
     AnimationEng.addShader(part, Shader(Paths::shaders_vs, Paths::shaders_fs));
   };
-
   make_part(RobotParts::forearm, Paths::resources_Forearm);
   make_part(RobotParts::joint, Paths::resources_joint);
   make_part(RobotParts::middle_arm, Paths::resources_middle_arm_obj);
@@ -39,67 +39,63 @@ void processInput(GLFWwindow *window, Camera &camera, PartManager &AnimationEng)
   if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) AnimationEng.RotatePart(RobotParts::hand, 1.f);
 }
 
-
-template<typename T>
+template <typename T>
 concept Container = requires(T t) {
   std::begin(t);
   std::end(t);
 };
 
-template<Container T>
-void render_helper(T const & cont){
-  for(auto const &elem : cont){
-    elem.render();
-  }
+template <Container T>
+void renderHelper(T const &cont) {
+  for (auto const &elem : cont) elem.render();
 }
 
-void render_helper(auto const & elem){
-    elem.render();
-}
+void renderHelper(auto const &elem) { elem.render(); }
 
-void render(const PartManager &PartsManager, GLFWwindow *window, const std::unordered_map<RobotParts, Part> &RobotParts, auto const &... part) {
+void render(const PartManager &PartsManager, const std::unordered_map<RobotParts, Part> &RobotParts, auto const &...part) {
   PartsManager.render(RobotParts);
-  (render_helper(part),...);
+  (renderHelper(part), ...);
   CheckForErrors("render");
-  glfwSwapBuffers(window);
-  glfwPollEvents();
 }
 
-template<Container T>
-void update_helper(T & cont, Camera const & camera){
-  for(auto const &elem : cont){
-    elem.updateShaders(camera);
-  }
+template <Container T>
+void updateHelper(T &cont, Camera const &camera) {
+  for (auto &elem : cont) elem.updateShaders(camera);
 }
 
-void update_helper(auto & elem, Camera const & camera){
-    elem.updateShaders(camera);
-}
+void updateHelper(auto &elem, Camera const &camera) { elem.updateShaders(camera); }
 
-void updateShaders(PartManager &PartsManager,Camera const & camera,  auto &... part) {
+void updateShaders(PartManager &PartsManager, Camera const &camera, auto &...part) {
   PartsManager.updateShaders(camera);
-  (update_helper(part,camera),...);
+  (updateHelper(part, camera), ...);
   CheckForErrors("Shader Update");
 }
-
 
 int main() {
   {
     int         Radius = 3;
     GLFWwindow *window = init();
-    Camera      camera(Radius, 0, {0.0f, 0.0f, 0.0f});
-    Shader      shader(Paths::shaders_vs, Paths::shaders_fs);
-    Point       point({1, 1, 1}, {1,0,0});
+    ImGuiInit();
+    Camera camera(Radius, 0, {0.0f, 0.0f, 0.0f});
+    Point  endPoint{{1, 1, 1}, {1, 0.2, 0}};
+    Gui    gui(ImGui::GetIO(), window);
     try {
       PartManager                          partManger;
       std::unordered_map<RobotParts, Part> Parts;
+
       make_robot(Parts, partManger);
       while (!glfwWindowShouldClose(window)) {
         preRender();
+        gui.newFrame();
         processInput(window, camera, partManger);
-        updateShaders(partManger,camera, point);
-        render(partManger, window, Parts, point);
+        updateShaders(partManger, camera, endPoint);
+        render(partManger, Parts, endPoint);
+        gui.renderImguiWindow();
+        endPoint = gui.CurrentPointPos;
+
         CheckForErrors("Something went wrong ");
+        glfwSwapBuffers(window);
+        glfwPollEvents();
       }
     } catch (std::exception &e) {
       std::cerr << e.what() << std::endl;

@@ -17,7 +17,8 @@ class Point {
  public:
   Point(glm::vec3 const &position_, glm::vec3 const &color_) : color(color_), position(position_) {}
   void render() const;
-  void updateShaders(Camera const &camera) ;
+  void updateShaders(Camera const &camera);
+  void operator=(glm::vec3 const &newpos);
 
  private:
   glm::vec3  color{};
@@ -29,7 +30,7 @@ class Point {
 class PartManager {
  public:
   void updateShaders(const Camera &camera);
-  void RotatePart(RobotParts part, float angle);
+  float RotatePart(RobotParts part, float angle);
   void addShader(RobotParts part, Shader &&shader);
   void render_debug(std::unordered_map<RobotParts, Part> const &rendercontainer, GLFWwindow *window) const;
   void render(std::unordered_map<RobotParts, Part> const &rendercontainer) const;

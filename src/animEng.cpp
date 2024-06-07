@@ -32,14 +32,14 @@ void PartManager::updateShaders(const Camera &camera) {
   for (auto const &shader : ShaderMap) UpdateShader(shader.second, StateMap.at(shader.first), camera);
 }
 
-void PartManager::RotatePart(RobotParts part, float angle) {
+float PartManager::RotatePart(RobotParts part, float angle = 1.f) {
   const auto       CalledPartPtr          = find_in_array(PartOrder, part);
   auto      &Called_part_state      = StateMap.find(part)->second;
   const glm::vec3 &Called_part_pivotPoint = Called_part_state.pivotPoint;
-  Called_part_state.angle                 = angle;
+  Called_part_state.angle                 += angle;
   for (auto i = CalledPartPtr; i < PartOrder.end(); i++) {
     auto           &part_state        = StateMap.at(*i);
-    const glm::qua  rotation          = glm::angleAxis(glm::radians(Called_part_state.angle), Called_part_state.axis);
+    const glm::qua  rotation          = glm::angleAxis(glm::radians(angle), Called_part_state.axis);
     const glm::mat4 rotation_mat4     = glm::mat4_cast(rotation);
     const glm::mat4 backToPivot       = glm::translate(glm::mat4(1.0f), Called_part_pivotPoint);
     const glm::mat4 toOrigin          = glm::translate(glm::mat4(1.0f), -Called_part_pivotPoint);
@@ -48,6 +48,7 @@ void PartManager::RotatePart(RobotParts part, float angle) {
     part_state.pivotPoint             = combinedTransform * glm::vec4(part_state.pivotPoint, 1.0f);
     part_state.axis                   = glm::normalize(rotation * part_state.axis);
   }
+  return Called_part_state.angle;
 }
 
 std::unordered_map<RobotParts, Shader> const &PartManager::getShaderMap() const { return ShaderMap; }
@@ -173,3 +174,5 @@ void Point::render() const {
 void Point::updateShaders(Camera const & camera){
   UpdateShader(pointshader, state, camera);
 }
+void Point::operator=(glm::vec3 const &newpos) { position = newpos; }
+

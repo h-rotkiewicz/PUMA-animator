@@ -2,7 +2,6 @@
 // clang-format off
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <span>
 #define STB_IMAGE_IMPLEMENTATION
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
