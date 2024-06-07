@@ -2,10 +2,8 @@
 
 #include <iostream>
 #include <string>
-#include <utility>
 
 #include "OBJ_Loader.h"
-#include "imgui.h"
 #include "settings.h"
 #include "stb_image.h"
 void framebufferSizeCallback([[maybe_unused]] GLFWwindow *window, int width, int height) { glViewport(0, 0, width, height); }
@@ -78,37 +76,3 @@ GLBuffers load_vxo(std::string_view path) {
   return bindBuffers(Loader.LoadedVertices, Loader.LoadedIndices);
 }
 
-void Part::Render() const {
-  glBindVertexArray(buffers.VAO);
-  CheckForErrors(std::string("Binding VAO: ") + std::to_string(buffers.VAO));
-  glDrawElements(GL_TRIANGLE_STRIP,
-                 buffers.ebo_size,
-                 GL_UNSIGNED_INT,
-                 0);  // traiangle strip Works better ???? why ??
-                      // GL_LINES_ADJACENCY also looks cool
-                      // GL_LINES also looks cool
-  CheckForErrors("Drawing elements");
-}
-
-Part::~Part() {
-  glDeleteVertexArrays(1, &buffers.VAO);
-  glDeleteBuffers(1, &buffers.VBO);
-  glDeleteBuffers(1, &buffers.EBO);
-}
-
-Part::Part(std::string_view path) { buffers = load_vxo(path); }
-
-Part &Part::operator=(Part &&other) {
-  buffers.VAO      = std::exchange(other.buffers.VAO, 0);
-  buffers.VBO      = std::exchange(other.buffers.VBO, 0);
-  buffers.EBO      = std::exchange(other.buffers.EBO, 0);
-  buffers.ebo_size = std::exchange(other.buffers.ebo_size, 0);
-  return *this;
-}
-
-Part::Part(Part &&other) {
-  buffers.VAO      = std::exchange(other.buffers.VAO, 0);
-  buffers.VBO      = std::exchange(other.buffers.VBO, 0);
-  buffers.EBO      = std::exchange(other.buffers.EBO, 0);
-  buffers.ebo_size = std::exchange(other.buffers.ebo_size, 0);
-}

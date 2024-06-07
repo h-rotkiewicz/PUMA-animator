@@ -71,6 +71,7 @@ void updateShaders(PartManager &PartsManager, Camera const &camera, auto &...par
   CheckForErrors("Shader Update");
 }
 
+
 int main() {
   {
     int         Radius = 3;
@@ -86,12 +87,16 @@ int main() {
       make_robot(Parts, partManger);
       while (!glfwWindowShouldClose(window)) {
         preRender();
+        if(gui.rotateToPoint){
+          partManger.rotateToPoint(endPoint.getPosition());
+        }
+        endPoint = gui.CurrentPointPos;
         gui.newFrame();
         processInput(window, camera, partManger);
         updateShaders(partManger, camera, endPoint);
         render(partManger, Parts, endPoint);
         gui.renderImguiWindow();
-        endPoint = gui.CurrentPointPos;
+        
 
         CheckForErrors("Something went wrong ");
         glfwSwapBuffers(window);

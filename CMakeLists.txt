@@ -7,7 +7,6 @@ project(PUMA)
 
 find_package( OpenGL REQUIRED )
 
-option(ASSIMP_INSTALL OFF)
 option(BUILD_SHARED_LIBS OFF)
 set( GLFW_BUILD_DOCS OFF CACHE BOOL  "GLFW lib only" )
 set( GLFW_INSTALL OFF CACHE BOOL  "GLFW lib only" )
@@ -23,12 +22,13 @@ endif()
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/includes/glfw)
 add_subdirectory(${CMAKE_SOURCE_DIR}/includes/glm)
-
+add_subdirectory(${CMAKE_SOURCE_DIR}/includes/assimp)
 
 file(GLOB SOURCES "src/*.cpp" "src/*.c" "includes/imgui/*.cpp" "includes/imgui/backends/imgui_impl_glfw.cpp" "includes/imgui/backends/imgui_impl_opengl3.cpp")
 
 include_directories(${CMAKE_SOURCE_DIR}/includes)
 include_directories(${CMAKE_SOURCE_DIR}/includes/glm/)
+include_directories(${CMAKE_SOURCE_DIR}/includes/assimp/include)
 
 include_directories(${CMAKE_SOURCE_DIR}/includes/imgui)
 include_directories(${CMAKE_SOURCE_DIR}/includes/imgui/backends)
@@ -41,7 +41,7 @@ else()
     target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic )
 endif()
 
-target_link_libraries(${PROJECT_NAME} glfw glm )
+target_link_libraries(${PROJECT_NAME} glfw glm assimp)
 if( MSVC )
     if(${CMAKE_VERSION} VERSION_LESS "3.6.0")
         message( "\n\t[ WARNING ]\n\n\tCMake version lower than 3.6.\n\n\t - Please update CMake and rerun; OR\n\t - Manually set 'GLFW-CMake-starter' as StartUp Project in Visual Studio.\n" )

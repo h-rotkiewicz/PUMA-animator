@@ -19,17 +19,11 @@ struct GLBuffers{
   std::size_t ebo_size{};
 };
 
-class Part {
-  GLBuffers buffers{};
-public:
-  Part(const Part&) = delete;
-  Part &operator=(const Part&) = delete;
-  Part(Part&& other) ;
-  Part &operator=(Part&& other) ;
-  Part(std::string_view path) ;
-  void Render() const ;
-  ~Part() ;
-};
+inline float NormalizeAngle(float angle) {
+  if (angle > 360) return NormalizeAngle(angle - 360);
+  if (angle < 0) return NormalizeAngle(angle + 360);
+  return angle;
+}
 
 void CheckForErrors(std::string_view message = "");
 void framebufferSizeCallback([[maybe_unused]]GLFWwindow *window, int width, int height);

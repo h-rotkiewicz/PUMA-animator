@@ -7,6 +7,7 @@ void ImGuiInit();
 class Gui {
  public:
   glm::vec3 CurrentPointPos{};
+  bool      rotateToPoint{};
 
  public:
   Gui(const Gui&)            = delete;
