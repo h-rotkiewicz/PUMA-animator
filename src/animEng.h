@@ -23,7 +23,7 @@ class RenderableObject {
  protected:
   GLBuffers buffers{};
   RenderableObject()                                    = default;
-  RenderableObject(const RenderableObject &)            = delete; // Not necessary for now
+  RenderableObject(const RenderableObject &)            = delete;  // Not necessary for now
   RenderableObject &operator=(const RenderableObject &) = delete;
   RenderableObject(RenderableObject &&other);
   RenderableObject &operator=(RenderableObject &&other);
@@ -56,10 +56,12 @@ class PartManager {
  public:
   void  updateShaders(const Camera &camera);
   float RotatePart(RobotParts part, float angle = 0.05f);
-  void  render_debug(std::unordered_map<RobotParts, Part> const &rendercontainer, GLFWwindow *window) const;
-  void  render(std::unordered_map<RobotParts, Part> const &rendercontainer) const;
-  void  addShader(RobotParts part, Shader &&shader);
-  void  rotateToPoint(glm::vec3 const &endPos);
+  void  zeroRobot();
+
+  void render_debug(std::unordered_map<RobotParts, Part> const &rendercontainer, GLFWwindow *window) const;
+  void render(std::unordered_map<RobotParts, Part> const &rendercontainer) const;
+  void addShader(RobotParts part, Shader &&shader);
+  void rotateToPoint(glm::vec3 const &endPos);
 
   std::unordered_map<RobotParts, Shader> const &getShaderMap() const;
 
