@@ -10,7 +10,7 @@
 #include <string_view>
 
 
-enum class RobotParts { base, upper_base, middle_arm, joint, forearm, hand };
+enum class RobotParts { base, upper_base, middleArm, joint, forearm, hand };
 
 struct GLBuffers{
   GLuint VAO{};

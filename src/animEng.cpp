@@ -5,7 +5,7 @@
 #include "defines.h"
 #include "settings.h"
 
-constexpr std::array<RobotParts, Settings::RobotSize> PartOrder{RobotParts::base, RobotParts::upper_base, RobotParts::middle_arm, RobotParts::joint, RobotParts::forearm, RobotParts::hand};
+constexpr std::array<RobotParts, Settings::RobotSize> PartOrder{RobotParts::base, RobotParts::upper_base, RobotParts::middleArm, RobotParts::joint, RobotParts::forearm, RobotParts::hand};
 
 constexpr auto find_in_array(auto const &array, auto const &part_) {
   for (size_t i = 0; i < array.size(); i++)
@@ -195,7 +195,7 @@ void PartManager::addShader(RobotParts part, Shader &&shader) {
   } else if (part == RobotParts::upper_base) {
     state.axis       = {0, 1, 0};
     state.pivotPoint = {-0.0003, 0.47991, 0.104};
-  } else if (part == RobotParts::middle_arm) {
+  } else if (part == RobotParts::middleArm) {
     state.axis       = {0, 0, 1};
     state.pivotPoint = {0.008803, 0.757991, -0.103817};
   } else if (part == RobotParts::joint) {
@@ -222,15 +222,15 @@ void PartManager::rotateToPoint(glm::vec3 const &endPos) {
   const float Speed = 0.05f;
 
   const float theta1            = (StateMap[RobotParts::upper_base].angle);
-  const float theta2            = (StateMap[RobotParts::middle_arm].angle);
+  const float theta2            = (StateMap[RobotParts::middleArm].angle);
   const float theta3            = (StateMap[RobotParts::joint].angle);
   const float TargetBaseAngle   = (atan2(y, x));
   const auto  bigDelta          = x * cos(TargetBaseAngle) + y * sin(TargetBaseAngle);
   const auto  omega             = z - L1;
   const auto  delta             = pow(2 * bigDelta * L2, 2) + pow(2 * omega * L2, 2) - pow((pow(bigDelta, 2) + pow(omega, 2) + pow(L2, 2) - pow(L3, 2)), 2);
-  const float TargetMiddleAngle = (atan2(2 * omega * L2 * (bigDelta * bigDelta + omega * omega + L2 * L2 - L3 * L3) + 2 * bigDelta * L2 * sqrt(delta),
+  const float TargetMiddleAngle = -(atan2(2 * omega * L2 * (bigDelta * bigDelta + omega * omega + L2 * L2 - L3 * L3) + 2 * bigDelta * L2 * sqrt(delta),
                                                       2 * bigDelta * L2 * (bigDelta * bigDelta + omega * omega + L2 * L2 - L3 * L3) - 2 * omega * L2 * sqrt(delta)));
-  const float TargetJointAngle  = (-TargetMiddleAngle + atan2(omega - L2 * sin(TargetMiddleAngle), bigDelta - L2 * cos(TargetMiddleAngle)));
+  const float TargetJointAngle  = -(-TargetMiddleAngle + atan2(omega - L2 * sin(TargetMiddleAngle), bigDelta - L2 * cos(TargetMiddleAngle)));
 
   if (delta < 0) cerr << "No solution" << endl;
 
@@ -243,12 +243,12 @@ void PartManager::rotateToPoint(glm::vec3 const &endPos) {
   if (!moreOrLess(theta2, TargetMiddleAngle, Speed)) {
     std::cout << "Middle arm angle: " << theta2 << std::endl;
     std::cout << "Target middle angle: " << TargetMiddleAngle << std::endl;
-    RotatePart(RobotParts::middle_arm, getRotationDirection(theta2, TargetMiddleAngle - 1.5) * Speed);
+    RotatePart(RobotParts::middleArm, getRotationDirection(theta2, TargetMiddleAngle ) * Speed);
   }
   if (!moreOrLess(theta3, TargetJointAngle, Speed)) {
     std::cout << "Joint angle: " << theta3 << std::endl;
     std::cout << "Target joint angle: " << TargetJointAngle << std::endl;
-    RotatePart(RobotParts::joint, getRotationDirection(theta3, TargetJointAngle -2.65) * Speed);
+    RotatePart(RobotParts::joint, getRotationDirection(theta3, TargetJointAngle ) * Speed);
   }
 }
 
@@ -291,6 +291,8 @@ RenderableObject &RenderableObject::operator=(RenderableObject &&other) {
 RenderableObject::RenderableObject(RenderableObject &&other) { buffers = std::exchange(other.buffers, GLBuffers{}); };
 void PartManager::zeroRobot() {
   RotatePart(RobotParts::joint, glm::radians(205.f));
+  RotatePart(RobotParts::middleArm, glm::radians(90.f));
   StateMap.at(RobotParts::joint).angle = 0;
+  StateMap.at(RobotParts::middleArm).angle = 0;
 }
 

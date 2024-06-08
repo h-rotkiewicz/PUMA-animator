@@ -16,7 +16,7 @@ void make_robot(std::unordered_map<RobotParts, Part> &container, PartManager &An
   };
   make_part(RobotParts::forearm, Paths::resources_Forearm);
   make_part(RobotParts::joint, Paths::resources_joint);
-  make_part(RobotParts::middle_arm, Paths::resources_middle_arm_obj);
+  make_part(RobotParts::middleArm, Paths::resources_middle_arm_obj);
   make_part(RobotParts::hand, Paths::resources_hand);
   make_part(RobotParts::upper_base, Paths::resources_upper_base_obj);
   make_part(RobotParts::base, Paths::resources_base_obj);
@@ -33,7 +33,7 @@ void processInput(GLFWwindow *window, Camera &camera, PartManager &AnimationEng)
   if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) camera.change_radius(0.01);
   if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) camera.change_radius(-0.01);
   if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS) AnimationEng.RotatePart(RobotParts::upper_base);
-  if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) AnimationEng.RotatePart(RobotParts::middle_arm);
+  if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) AnimationEng.RotatePart(RobotParts::middleArm);
   if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) AnimationEng.RotatePart(RobotParts::joint);
   if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) AnimationEng.RotatePart(RobotParts::forearm);
   if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) AnimationEng.RotatePart(RobotParts::hand);
