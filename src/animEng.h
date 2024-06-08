@@ -13,22 +13,32 @@ struct ModelState {
   glm::mat4 view       = glm::identity<glm::mat4>();
 };
 
-class Part {
-  GLBuffers buffers{};
+namespace RobotDimensions {
+constexpr float L1 = 0.47991;
+constexpr float L2 = 0.9;
+constexpr float L3 = 1.1;
+};  // namespace RobotDimensions
 
- public:
-  Part(const Part &)            = delete;
-  Part &operator=(const Part &) = delete;
-  Part(Part &&other);
-  Part &operator=(Part &&other);
-  Part(std::string_view path);
-  void Render() const;
-  ~Part();
+class RenderableObject {
+ protected:
+  GLBuffers buffers{};
+  RenderableObject()                                    = default;
+  RenderableObject(const RenderableObject &)            = delete; // Not necessary for now
+  RenderableObject &operator=(const RenderableObject &) = delete;
+  RenderableObject(RenderableObject &&other);
+  RenderableObject &operator=(RenderableObject &&other);
+  ~RenderableObject();
 };
 
-class Point {
+class Part : public RenderableObject {
  public:
-  Point(glm::vec3 const &position_, glm::vec3 const &color_) : color(color_), position(position_) {}
+  Part(std::string_view path);
+  void Render() const;
+};
+
+class Point : public RenderableObject {
+ public:
+  Point(glm::vec3 const &position_, glm::vec3 const &color_) : RenderableObject(), color(color_), position(position_) {}
   void      render() const;
   void      updateShaders(Camera const &camera);
   void      operator=(glm::vec3 const &newpos);
@@ -37,23 +47,10 @@ class Point {
  private:
   glm::vec3  color{};
   glm::vec3  position{};
+  float      size = 0.04f;
   ModelState state{};
-  Shader     pointshader{Paths::shaders_vs_debug, Paths::shaders_fs_debug};
+  Shader     pointshader{Paths::shaders_vs_debug, Paths::shaders_point_fs};
 };
-
-inline bool moreOrLess(float a, float b, float errorMargin = 1.f) { return std::abs(a - b) <= errorMargin; }
-
-namespace RobotDimensions {
-constexpr float L1 = 0.47991;
-constexpr float L2 = 0.9;
-constexpr float L3 = 1.1;
-};  // namespace RobotDimensions
-
-inline float getRotationDirection(float current, float target) {
-  if (current < target) return 1;
-  if (current > target) return -1;
-  return 0;
-}
 
 class PartManager {
  public:
