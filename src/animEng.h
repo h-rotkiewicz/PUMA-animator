@@ -44,9 +44,9 @@ class Point {
 inline bool moreOrLess(float a, float b, float errorMargin = 1.f) { return std::abs(a - b) <= errorMargin; }
 
 namespace RobotDimensions {
-constexpr float L1 = 0.47991;
-constexpr float L2 = 0.9;
-constexpr float L3 = 1.1;
+constexpr float L1 = 0.77991;
+constexpr float L2 = 0.834;
+constexpr float L3 = 1.238;
 };  // namespace RobotDimensions
 
 inline float getRotationDirection(float current, float target) {

@@ -228,26 +228,26 @@ void PartManager::rotateToPoint(glm::vec3 const &endPos) {
   const auto  bigDelta          = x * cos(TargetBaseAngle) + y * sin(TargetBaseAngle);
   const auto  omega             = z - L1;
   const auto  delta             = pow(2 * bigDelta * L2, 2) + pow(2 * omega * L2, 2) - pow((pow(bigDelta, 2) + pow(omega, 2) + pow(L2, 2) - pow(L3, 2)), 2);
-  const float TargetMiddleAngle = (atan2(2 * omega * L2 * (bigDelta * bigDelta + omega * omega + L2 * L2 - L3 * L3) - 2 * bigDelta * L2 * sqrt(delta),
-                                                      2 * bigDelta * L2 * (bigDelta * bigDelta + omega * omega + L2 * L2 - L3 * L3) + 2 * omega * L2 * sqrt(delta)));
+  const float TargetMiddleAngle = (atan2(2 * omega * L2 * (bigDelta * bigDelta + omega * omega + L2 * L2 - L3 * L3) + 2 * bigDelta * L2 * sqrt(delta),
+                                                      2 * bigDelta * L2 * (bigDelta * bigDelta + omega * omega + L2 * L2 - L3 * L3) - 2 * omega * L2 * sqrt(delta)));
   const float TargetJointAngle  = (-TargetMiddleAngle + atan2(omega - L2 * sin(TargetMiddleAngle), bigDelta - L2 * cos(TargetMiddleAngle)));
 
   if (delta < 0) cerr << "No solution" << endl;
 
   if (!moreOrLess(theta1, TargetBaseAngle,Speed)) {
-    std::cout << "Base angle: " << theta2 << std::endl;
-    std::cout << "Target Base angle: " << TargetMiddleAngle << std::endl;
+    std::cout << "Base angle: " << theta1 << std::endl;
+    std::cout << "Target Base angle: " << TargetBaseAngle << std::endl;
     RotatePart(RobotParts::upper_base, getRotationDirection(theta1, TargetBaseAngle) * Speed);
   }
   if (!moreOrLess(theta2, TargetMiddleAngle,Speed)) {
     std::cout << "Middle arm angle: " << theta2 << std::endl;
     std::cout << "Target middle angle: " << TargetMiddleAngle << std::endl;
-    RotatePart(RobotParts::middle_arm, getRotationDirection(theta2, TargetMiddleAngle) * Speed);
+    RotatePart(RobotParts::middle_arm, getRotationDirection(theta2, TargetMiddleAngle - 1.5) * Speed);
   }
   if (!moreOrLess(theta3, TargetJointAngle, Speed)) {
     std::cout << "Joint angle: " << theta3 << std::endl;
     std::cout << "Target joint angle: " << TargetJointAngle << std::endl;
-    RotatePart(RobotParts::joint, getRotationDirection(theta3, TargetJointAngle) * Speed);
+    RotatePart(RobotParts::joint, getRotationDirection(theta3, TargetJointAngle -2.65) * Speed);
   }
 }
 
