@@ -233,7 +233,10 @@ void PartManager::rotateToPoint(glm::vec3 const &endPos) {
   const float TargetJointAngle  = (-TargetMiddleAngle + atan2(omega - L2 * sin(TargetMiddleAngle), bigDelta - L2 * cos(TargetMiddleAngle)));
 
   if (delta < 0) cerr << "No solution" << endl;
-
+  if (delta < 0 || std::isnan(TargetBaseAngle) || std::isnan(TargetJointAngle)  || std::isnan(TargetMiddleAngle) ){
+    std::cout<<"Robot position unreachable ";
+  }
+  else{
   if (!moreOrLess(theta1, TargetBaseAngle,Speed)) {
 
     std::cout << "Base angle: " << theta1 << std::endl;
@@ -251,7 +254,7 @@ void PartManager::rotateToPoint(glm::vec3 const &endPos) {
     RotatePart(RobotParts::joint, getRotationDirection(theta3, TargetJointAngle ) * Speed);
   }
 }
-
+}
 void Point::render() const {
   pointshader.use();
   pointshader.setVec3("color", color);
