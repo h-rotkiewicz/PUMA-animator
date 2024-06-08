@@ -71,25 +71,22 @@ void updateShaders(PartManager &PartsManager, Camera const &camera, auto &...par
   CheckForErrors("Shader Update");
 }
 
-
 int main() {
   {
     int         Radius = 3;
     GLFWwindow *window = init();
     ImGuiInit();
     Camera camera(Radius, 0, {0.0f, 0.0f, 0.0f});
-    Point  endPoint{{1, 1, 1}, {1, 0.2, 0}};
+    Point  endPoint{{0, 0, 0}, {0, 1, 0}};
     Gui    gui(ImGui::GetIO(), window);
     try {
       PartManager                          partManger;
       std::unordered_map<RobotParts, Part> Parts;
-
       make_robot(Parts, partManger);
+      partManger.zeroRobot();
       while (!glfwWindowShouldClose(window)) {
         preRender();
-        if(gui.rotateToPoint){
-          partManger.rotateToPoint(endPoint.getPosition());
-        }
+        if (gui.rotateToPoint) partManger.rotateToPoint(endPoint.getPosition());
         endPoint = gui.CurrentPointPos;
         gui.newFrame();
         processInput(window, camera, partManger);

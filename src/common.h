@@ -25,6 +25,8 @@ inline float NormalizeAngle(float angle) {
   return angle;
 }
 
+bool  moreOrLess(float a, float b, float errorMargin = 1.f);
+float getRotationDirection(float current, float target);
 void CheckForErrors(std::string_view message = "");
 void framebufferSizeCallback([[maybe_unused]]GLFWwindow *window, int width, int height);
 void preRender();
