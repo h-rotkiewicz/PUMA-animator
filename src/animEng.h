@@ -13,12 +13,6 @@ struct ModelState {
   glm::mat4 view       = glm::identity<glm::mat4>();
 };
 
-namespace RobotDimensions {
-constexpr float L1 = 0.47991;
-constexpr float L2 = 0.9;
-constexpr float L3 = 1.1;
-};  // namespace RobotDimensions
-
 class RenderableObject {
  protected:
   GLBuffers buffers{};
@@ -51,6 +45,13 @@ class Point : public RenderableObject {
   ModelState state{};
   Shader     pointshader{Paths::shaders_vs_debug, Paths::shaders_point_fs};
 };
+
+namespace RobotDimensions {
+constexpr float L1 = 0.77991;
+constexpr float L2 = 0.834;
+constexpr float L3 = 1.238;
+};  // namespace RobotDimensions
+
 
 class PartManager {
  public:
