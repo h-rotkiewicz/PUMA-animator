@@ -6,6 +6,15 @@
 #include "OBJ_Loader.h"
 #include "settings.h"
 #include "stb_image.h"
+
+bool moreOrLess(float a, float b, float errorMargin) { return std::abs(a - b) <= errorMargin; }
+
+float getRotationDirection(float current, float target) {
+  if (current < target) return 1;
+  if (current > target) return -1;
+  return 0;
+}
+
 void framebufferSizeCallback([[maybe_unused]] GLFWwindow *window, int width, int height) { glViewport(0, 0, width, height); }
 
 void CheckForErrors(std::string_view message) {
@@ -33,9 +42,10 @@ GLFWwindow *init() {
 
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) throw std::runtime_error("Failed to init GLAD ");
   glEnable(GL_DEPTH_TEST);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   return window;
 }
-
 
 GLBuffers bindBuffers(std::vector<objl::Vertex> const &vertices, std::vector<unsigned int> const &indices) {
   GLuint VBO, VAO, EBO;
@@ -75,4 +85,3 @@ GLBuffers load_vxo(std::string_view path) {
   }
   return bindBuffers(Loader.LoadedVertices, Loader.LoadedIndices);
 }
-

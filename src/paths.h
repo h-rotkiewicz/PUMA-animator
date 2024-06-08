@@ -11,6 +11,7 @@
 struct Paths {
   static constexpr const char* shaders_vs               = FILEPATH(SHADERS_DIR, "transform.vs");
   static constexpr const char* shaders_fs               = FILEPATH(SHADERS_DIR, "transform.fs");
+  static constexpr const char* shaders_point_fs         = FILEPATH(SHADERS_DIR, "shaders_point.fs");
   static constexpr const char* shaders_fs_debug         = FILEPATH(SHADERS_DIR, "shaders_debug.fs");
   static constexpr const char* shaders_vs_debug         = FILEPATH(SHADERS_DIR, "shaders_debug.vs");
   static constexpr const char* resources_metalic        = FILEPATH(RESOURCES_DIR, "metal-texture-25.jpg");
