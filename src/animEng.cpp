@@ -228,8 +228,8 @@ void PartManager::rotateToPoint(glm::vec3 const &endPos) {
   const auto  bigDelta          = x * cos(TargetBaseAngle) + y * sin(TargetBaseAngle);
   const auto  omega             = z - L1;
   const auto  delta             = pow(2 * bigDelta * L2, 2) + pow(2 * omega * L2, 2) - pow((pow(bigDelta, 2) + pow(omega, 2) + pow(L2, 2) - pow(L3, 2)), 2);
-  const float TargetMiddleAngle = (atan2(2 * omega * L2 * (bigDelta * bigDelta + omega * omega + L2 * L2 - L3 * L3) - 2 * bigDelta * L2 * sqrt(delta),
-                                         2 * omega * L2 * (bigDelta * bigDelta + omega * omega + L2 * L2 - L3 * L3) + 2 * bigDelta * L2 * sqrt(delta)));
+  const float TargetMiddleAngle = (atan2(2 * bigDelta * L2 * (bigDelta * bigDelta + omega * omega + L2 * L2 - L3 * L3) - 2 * bigDelta * L2 * sqrt(delta),
+                                         2 * bigDelta * L2 * (bigDelta * bigDelta + omega * omega + L2 * L2 - L3 * L3) + 2 * bigDelta * L2 * sqrt(delta)));
   const float TargetJointAngle  = -(-TargetMiddleAngle + atan2(omega - L2 * sin(TargetMiddleAngle), bigDelta - L2 * cos(TargetMiddleAngle)));
 
   if (delta < 0) cerr << "No solution" << endl;
