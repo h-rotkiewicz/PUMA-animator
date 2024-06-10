@@ -17,7 +17,7 @@ struct Paths {
   static constexpr const char* resources_metalic        = FILEPATH(RESOURCES_DIR, "metal-texture-25.jpg");
   static constexpr const char* resources_middle_arm_obj = FILEPATH(RESOURCES_DIR, "middlearm.obj");
   static constexpr const char* resources_upper_base_obj = FILEPATH(RESOURCES_DIR, "UpperBase.obj");
-  static constexpr const char* resources_base_obj       = FILEPATH(RESOURCES_DIR, "base.obj");
+  static constexpr const char* resources_base_obj       = FILEPATH(RESOURCES_DIR, "Base.obj");
   static constexpr const char* resources_joint          = FILEPATH(RESOURCES_DIR, "joint.obj");
   static constexpr const char* resources_Forearm        = FILEPATH(RESOURCES_DIR, "Forearm.obj");
   static constexpr const char* resources_hand           = FILEPATH(RESOURCES_DIR, "hand.obj");
