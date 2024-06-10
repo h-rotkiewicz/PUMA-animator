@@ -5,7 +5,6 @@
 
 #include "OBJ_Loader.h"
 #include "settings.h"
-#include "stb_image.h"
 
 bool moreOrLess(float a, float b, float errorMargin) { return std::abs(a - b) <= errorMargin; }
 

@@ -25,6 +25,7 @@ class RenderableObject {
 };
 
 class Part : public RenderableObject {
+ GLuint textureID;
  public:
   Part(std::string_view path);
   void Render() const;

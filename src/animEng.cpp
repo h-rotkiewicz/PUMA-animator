@@ -1,9 +1,10 @@
 #include "animEng.h"
 
 #include <utility>
-
+#define STB_IMAGE_IMPLEMENTATION
 #include "defines.h"
 #include "settings.h"
+#include "stb_image.h"
 
 constexpr std::array<RobotParts, Settings::RobotSize> PartOrder{RobotParts::base, RobotParts::upper_base, RobotParts::middleArm, RobotParts::joint, RobotParts::forearm, RobotParts::hand};
 
@@ -96,14 +97,11 @@ void renderLine(const glm::vec3 &start, const glm::vec3 &end) {
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(Line), &Line, GL_STATIC_DRAW);
 
-  // Vertex positions
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), nullptr);
 
-  // Draw the line
   glDrawArrays(GL_LINES, 0, 2);
 
-  // Unbind and cleanup
   glDisableVertexAttribArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   glBindVertexArray(0);
@@ -239,18 +237,12 @@ void PartManager::rotateToPoint(glm::vec3 const &endPos) {
   }
 
   if (!moreOrLess(theta1, TargetBaseAngle, Speed)) {
-    std::cout << "Base angle: " << theta1 << std::endl;
-    std::cout << "Target Base angle: " << TargetBaseAngle << std::endl;
     RotatePart(RobotParts::upper_base, getRotationDirection(theta1, TargetBaseAngle) * Speed);
   }
   if (!moreOrLess(theta2, TargetMiddleAngle, Speed)) {
-    std::cout << "Middle arm angle: " << theta2 << std::endl;
-    std::cout << "Target middle angle: " << TargetMiddleAngle << std::endl;
     RotatePart(RobotParts::middleArm, getRotationDirection(theta2, TargetMiddleAngle) * Speed);
   }
   if (!moreOrLess(theta3, TargetJointAngle, Speed)) {
-    std::cout << "Joint angle: " << theta3 << std::endl;
-    std::cout << "Target joint angle: " << TargetJointAngle << std::endl;
     RotatePart(RobotParts::joint, getRotationDirection(theta3, TargetJointAngle) * Speed);
   }
 }
@@ -269,6 +261,8 @@ void Point::operator=(glm::vec3 const &newpos) { position = newpos; }
 
 void Part::Render() const {
   glBindVertexArray(buffers.VAO);
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, textureID);
   CheckForErrors(std::string("Binding VAO: ") + std::to_string(buffers.VAO));
   glDrawElements(GL_TRIANGLE_STRIP,
                  buffers.ebo_size,
@@ -279,7 +273,26 @@ void Part::Render() const {
   CheckForErrors("Drawing elements");
 }
 
-Part::Part(std::string_view path) : RenderableObject() { buffers = load_vxo(path); }
+Part::Part(std::string_view path) : RenderableObject() {
+  buffers = load_vxo(path);
+  glGenTextures(1, &textureID);
+  glBindTexture(GL_TEXTURE_2D, textureID);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);  // set texture wrapping to GL_REPEAT (default wrapping method)
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  int width, height, nrChannels;
+  stbi_set_flip_vertically_on_load(true);
+  unsigned char *data = stbi_load(Paths::resources_metalic, &width, &height, &nrChannels, 0);
+  if (data) {
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+  } else {
+    std::cout << "Failed to load texture" << std::endl;
+  }
+  CheckForErrors("Texture Loading");
+  stbi_image_free(data);
+}
 
 RenderableObject::~RenderableObject() {
   glDeleteVertexArrays(1, &buffers.VAO);
